@@ -39,11 +39,11 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         {
             return {YomkResponse::eNo, std::string("dlopen failed: ") + dlerror()};
         }
-        metaFn = reinterpret_cast<YomkPluginMetaFunc>(dlsym(handle, YOMK_PLUGIN_SYMBOL_META));
+        metaFn = reinterpret_cast<YomkPluginMetaFunc>(dlsym(handle, YOMKPLUGIN_SYMBOL_META));
         createFn = reinterpret_cast<YomkPluginCreateInstanceFunc>(
-            dlsym(handle, YOMK_PLUGIN_SYMBOL_CREATE_INSTANCE));
+            dlsym(handle, YOMKPLUGIN_SYMBOL_CREATE_INSTANCE));
         deleteFn = reinterpret_cast<YomkPluginDeleteInstanceFunc>(
-            dlsym(handle, YOMK_PLUGIN_SYMBOL_DELETE_INSTANCE));
+            dlsym(handle, YOMKPLUGIN_SYMBOL_DELETE_INSTANCE));
         if (!metaFn || !createFn || !deleteFn)
         {
             dlclose(handle);
@@ -56,12 +56,12 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
             dlclose(handle);
             return {YomkResponse::eNo, "invalid plugin meta"};
         }
-        if (meta->abi_version != YOMK_PLUGIN_ABI_VERSION)
+        if (meta->abi_version != YOMKPLUGIN_ABI_VERSION)
         {
             dlclose(handle);
             return {YomkResponse::eNo,
                     "abi version mismatch: plugin " + std::to_string(meta->abi_version) +
-                        ", host " + std::to_string(YOMK_PLUGIN_ABI_VERSION)};
+                        ", host " + std::to_string(YOMKPLUGIN_ABI_VERSION)};
         }
         libId = meta->name;
 

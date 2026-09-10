@@ -12,7 +12,7 @@ using namespace yomk;
 /* ------------------------- 宿主 dlsym 契约 ------------------------- */
 
 /*
- * 宿主 dlsym 查找的固定符号名（extern "C"，由插件经 YOMK_PLUGIN_EXPORT 导出）：
+ * 宿主 dlsym 查找的固定符号名（extern "C"，由插件经 YOMKPLUGIN_EXPORT 导出）：
  *   const YomkPluginMeta *yomk_plugin_meta(); 返回静态常量指针
  *   YomkPluginInterface *yomk_plugin_create_instance(const char *instance_name,
  * const char *instance_file); void
@@ -23,9 +23,9 @@ using namespace yomk;
  * 为透传参数（允许传空），插件系统不读不解析，由插件实现自行决定是否使用。
  * 所有导出函数在插件侧 try/catch，异常时 create 返回 nullptr。
  */
-#define YOMK_PLUGIN_SYMBOL_META "yomk_plugin_meta"
-#define YOMK_PLUGIN_SYMBOL_CREATE_INSTANCE "yomk_plugin_create_instance"
-#define YOMK_PLUGIN_SYMBOL_DELETE_INSTANCE "yomk_plugin_delete_instance"
+#define YOMKPLUGIN_SYMBOL_META "yomk_plugin_meta"
+#define YOMKPLUGIN_SYMBOL_CREATE_INSTANCE "yomk_plugin_create_instance"
+#define YOMKPLUGIN_SYMBOL_DELETE_INSTANCE "yomk_plugin_delete_instance"
 
 /* 插件导出函数类型（dlsym 解析用） */
 typedef const YomkPluginMeta *(*YomkPluginMetaFunc)();

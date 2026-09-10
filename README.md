@@ -47,8 +47,8 @@
 内省宏（定义在扩展源码 `src/YomkPluginMsgs.h`，风格对齐框架 `YOMK_CONTEXT_INFO_*`）：
 
 ```cpp
-YOMK_PLUGIN_LOADER_INFO_LIBS() / INFO_LIB(libId) / INFO_ALL()
-YOMK_PLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
+YOMKPLUGIN_LOADER_INFO_LIBS() / INFO_LIB(libId) / INFO_ALL()
+YOMKPLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
 ```
 
 所有功能函数均用三参 `YomkInstallFunc` 安装，服务器层 `/YomkServerInfo` 内省可见类型标记。
@@ -85,9 +85,9 @@ build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/Y
 
 | 头文件 | 内容 |
 |--------|------|
-| `YomkPluginMeta.h` | 元数据 C 结构体 + `YOMK_PLUGIN_ABI_VERSION`（独立常量，不随扩展版本变化） |
+| `YomkPluginMeta.h` | 元数据 C 结构体 + `YOMKPLUGIN_ABI_VERSION`（独立常量，不随扩展版本变化） |
 | `YomkPluginInterface.h` | 插件实例抽象接口：instanceName（系统唯一主键）、instanceType、instanceId（业务字段，默认等于实例名，可覆写）、userData |
-| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMK_PLUGIN_EXPORT` 一键导出宏 + 全量 API 宏 |
+| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMKPLUGIN_EXPORT` 一键导出宏 + 全量 API 宏 |
 | `YomkPluginLoader.h` | 机制层服务声明 + 宿主 dlsym 契约（导出符号宏与函数类型） |
 
 头文件单向分层：ABI 叶子（Meta/Interface）→ 消息数据类（Msgs）→ 服务声明头（Loader/Manager/Builder）→ 聚合入口（API），无 include 环。以上头文件均随 install 分发；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可。
@@ -123,7 +123,7 @@ private:
 };
 
 static const YomkPluginMeta g_meta = {
-    YOMK_PLUGIN_ABI_VERSION, "MyPlugin", "demo", "0.0.1", "author", "description"
+    YOMKPLUGIN_ABI_VERSION, "MyPlugin", "demo", "0.0.1", "author", "description"
 };
 
 static const YomkPluginMeta *metaFn() { return &g_meta; }
@@ -134,7 +134,7 @@ static YomkPluginInterface *createFn(const char *instance_name, const char *inst
 }
 static void deleteFn(YomkPluginInterface *instance) { delete instance; }
 
-YOMK_PLUGIN_EXPORT(metaFn, createFn, deleteFn)
+YOMKPLUGIN_EXPORT(metaFn, createFn, deleteFn)
 ```
 
 编译为 SHARED 库（`find_package(YomkPluginSystem)` 后包含安装头文件）：
@@ -202,10 +202,10 @@ int main(int argc, char *argv[])
     YOMK_INIT();
 
     // 三个插件系统服务一键注册（也可用 YOMK_NEW_SERVICE 逐个注册）
-    YOMK_PLUGIN_NEW_SERVICES();
+    YOMKPLUGIN_NEW_SERVICES();
 
     // 版本查询请求（API 宏，等价于 YOMK_REQUEST("/YomkPluginManager/version", nullptr)）
-    YomkResponse resp = YOMK_PLUGIN_MANAGER_VERSION();
+    YomkResponse resp = YOMKPLUGIN_MANAGER_VERSION();
     if (resp.m_status == YomkResponse::eOk)
     {
         YomkUnPackPkg(resp.m_data, String, version);

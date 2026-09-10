@@ -6,7 +6,7 @@ extern "C"
 #endif
 
 /* ABI 版本为独立常量，不与 project(VERSION) 绑定；仅当 YomkPluginMeta 布局或导出符号签名变化时才递增 */
-#define YOMK_PLUGIN_ABI_VERSION 1
+#define YOMKPLUGIN_ABI_VERSION 1
 
     /* 插件元数据（常量），由插件 meta 导出函数返回静态指针 */
     typedef struct

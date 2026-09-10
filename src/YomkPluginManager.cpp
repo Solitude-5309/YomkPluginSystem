@@ -271,7 +271,7 @@ YomkResponse YomkPluginManager::list(YomkPkgPtr pkg)
                 continue;
             }
             PluginMeta m;
-            m.abi_version = YOMK_PLUGIN_ABI_VERSION;
+            m.abi_version = YOMKPLUGIN_ABI_VERSION;
             m.name = kv.second.name;
             m.type = kv.second.type;
             m.version = kv.second.version;
