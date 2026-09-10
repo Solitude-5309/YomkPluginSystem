@@ -2,7 +2,7 @@
  * ConnectionService：workflow 示例插件（连接器）
  * 演示 Builder 按清单加载插件并创建实例，实例文件透传给插件。
  */
-#include <YomkPluginSystem/YomkPlugin.h>
+#include <YomkPluginSystem/YomkPluginAPI.h>
 
 #include <string>
 

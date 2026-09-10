@@ -1,5 +1,5 @@
-# 连接器
+# 模块名@实例名@实例配置文件
 ConnectionService@ConnectionService@ConnectionService.txt   # 连接器配置
 
-# 工作空间
+# 模块名@实例名@实例配置文件
 WorkspaceService@WorkspaceService@WorkspaceService.txt  # 工作空间配置

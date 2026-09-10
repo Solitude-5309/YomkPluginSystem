@@ -1,7 +1,5 @@
+#include <YomkPluginSystem/YomkPluginAPI.h>
 #include <YomkServer/YomkAPI.h>
-#include <YomkPluginSystem/YomkPluginMsgs.h>
-#include <YomkPluginSystem/YomkPluginLoader.h>
-#include <YomkPluginSystem/YomkPluginManager.h>
 
 #include <cstdlib>
 #include <iostream>
