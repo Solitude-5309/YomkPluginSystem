@@ -74,7 +74,7 @@ ConnectionService@ConnectionService@ConnectionService.txt   # 连接器配置
 
 build 流程：解析清单 → 校验模块目录/实例文件/动态库存在 → `/YomkPluginManager/load` 加载（已加载幂等跳过）→ `/YomkPluginManager/create_instance` 按清单实例名创建。任一步失败返回 `eNo` 并指明清单行号。
 
-完整可构建示例见 `examples/workflow/`（两个示例插件模块 + 清单），验证程序见 `test/TestYomkPluginSystemBuilder.cpp`。
+完整可构建示例见 `examples/workflow/`（两个示例插件模块 + 清单），配套演示程序见 `examples/ExampleYomkPluginSystemBuilder.cpp`（随扩展默认编译安装，运行可验证 workflow 构建）。
 
 ## ABI 契约（插件开发者接口）
 
@@ -152,7 +152,7 @@ target_link_libraries(MyPlugin PRIVATE YomkServer::YomkServer)
 source build_ubuntu.sh
 ```
 
-> 交互式编译：依次询问 YomkServer 安装路径（前置路径）与扩展安装路径，默认均取 `$YOMK_PREFIX_PATH`，可修改。扩展库与 YomkServer 安装到一起（头文件由 `YomkServer::YomkServer` 的 INTERFACE include 统一提供）。测试程序与示例插件 TestPlugin.so 随扩展安装（测试程序到 `<安装路径>/bin`，TestPlugin.so 到 `<安装路径>/lib/plugins`），安装后可直接运行 `TestYomkPluginSystem` 验证。
+> 交互式编译：依次询问 YomkServer 安装路径（前置路径）与扩展安装路径，默认均取 `$YOMK_PREFIX_PATH`，可修改。扩展库与 YomkServer 安装到一起（头文件由 `YomkServer::YomkServer` 的 INTERFACE include 统一提供）。示例程序默认编译并随扩展安装（到 `<安装路径>/bin`），测试程序询问是否编译（直接回车不编译，输入 Y 才编译，测试程序与示例插件 TestPlugin.so 一并安装），安装后可直接运行 `ExampleYomkPluginSystemBuilder` 验证 workflow 构建示例。
 
 ## 工程结构
 
@@ -166,6 +166,9 @@ YomkPluginSystem/
 │   ├── YomkPluginMsgs.h          # 消息包 + 内省宏
 │   ├── YomkPluginLoader.h/.cpp   # 机制层服务
 │   └── YomkPluginManager.h/.cpp  # 数据层服务
+├── examples/                     # 演示示例
+│   ├── ExampleYomkPluginSystemBuilder.cpp  # Builder 演示程序（随扩展默认编译安装）
+│   └── workflow/                 # workflow 示例插件模块 + 清单
 ├── test/
 │   ├── TestPlugin/               # 示例插件（SHARED 库）
 │   └── TestYomkPluginSystem.cpp  # 测试程序

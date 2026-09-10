@@ -2,6 +2,7 @@
 # 一键编译脚本（交互式）
 # 用法: source build_ubuntu.sh
 # 依次交互询问 YomkServer 安装路径（前置路径）与扩展安装路径，默认均取环境变量 YOMK_PREFIX_PATH，可修改
+# 示例程序默认随主库编译安装（无需询问）；测试程序询问是否编译（直接回车不编译，输入 Y 才编译）
 # 扩展库与 YomkServer 安装到一起（头文件由 YomkServer::YomkServer 的 INTERFACE include 统一提供）
 # 安装后将扩展 lib 注册到系统动态库搜索路径（复用 yomk.conf）并刷新 ldconfig 缓存，新开任意终端即可找到扩展 so
 
@@ -10,6 +11,8 @@ PROJECT_NAME="YomkPluginSystem"
 BUILD_DIR="${SCRIPT_DIR}/build"
 TEST_DIR="${SCRIPT_DIR}/test"
 TEST_BUILD_DIR="${TEST_DIR}/build"
+EXAMPLES_DIR="${SCRIPT_DIR}/examples"
+EXAMPLES_BUILD_DIR="${EXAMPLES_DIR}/build"
 _ORIG_DIR="$(pwd)"
 
 # 路径规范化：展开 ~ 、相对路径补全
@@ -51,9 +54,8 @@ if [ ! -w "${INSTALL_DIR}" ]; then
     SUDO="sudo"
 fi
 
-# 询问是否编译 test
-read -p "编译测试程序? [Y/n]: " BUILD_TEST
-BUILD_TEST=${BUILD_TEST:-y}
+# 询问是否编译 test（直接回车不编译，输入 Y 才编译）
+read -p "编译测试程序? [y/N]: " BUILD_TEST
 if [[ "${BUILD_TEST}" =~ ^[Yy]$ ]]; then
     BUILD_TEST="ON"
 else
@@ -89,6 +91,24 @@ echo "-- 刷新动态库缓存 (ldconfig)..."
 sudo ldconfig
 if [ $? -ne 0 ]; then
     echo "ldconfig 执行失败"
+    cd "${_ORIG_DIR}"
+    return 1
+fi
+
+# 编译安装示例程序（默认随主库一并安装，无需询问）
+mkdir -p "${EXAMPLES_BUILD_DIR}"
+cd "${EXAMPLES_BUILD_DIR}" || return 1
+
+cmake "${EXAMPLES_DIR}" -DCMAKE_PREFIX_PATH="${INSTALL_DIR};${YOMK_SERVER_PATH}" -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
+if [ $? -ne 0 ]; then
+    echo "示例程序 cmake 配置失败"
+    cd "${_ORIG_DIR}"
+    return 1
+fi
+
+${SUDO} cmake --build . --config Release --target install
+if [ $? -ne 0 ]; then
+    echo "示例程序编译失败"
     cd "${_ORIG_DIR}"
     return 1
 fi
@@ -132,6 +152,9 @@ if [ -n "${_LIB_LINE}" ]; then
 else
     echo "    (未找到 lib${PROJECT_NAME}.so，请检查 ldconfig)"
 fi
+echo " 示例程序（安装于 ${INSTALL_DIR}/bin）:"
+echo "   - ExampleYomkPluginSystemBuilder"
+echo " 可直接运行 ExampleYomkPluginSystemBuilder 验证 workflow 构建示例"
 if [ "${BUILD_TEST}" = "ON" ]; then
     echo " 测试程序列表（安装于 ${INSTALL_DIR}/bin）:"
     for _t in "${INSTALL_DIR}/bin"/TestYomkPlugin*; do
