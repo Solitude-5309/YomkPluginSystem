@@ -4,10 +4,8 @@
 #include <YomkPluginSystem/YomkPluginManager.h>
 
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
 #include <string>
-#include <unistd.h>
 
 using namespace yomk;
 
@@ -66,13 +64,7 @@ static int instanceCount()
     return static_cast<int>(arr->d.size());
 }
 
-static bool fileExists(const std::string &path)
-{
-    std::ifstream f(path);
-    return f.good();
-}
-
-/* 插件路径查找顺序：环境变量 YOMK_TEST_PLUGIN → 构建目录产物 → 安装布局 bin/../lib/plugins */
+/* 插件路径查找顺序：环境变量 YOMK_TEST_PLUGIN → 构建目录产物 */
 static std::string findPluginPath()
 {
     const char *env = std::getenv("YOMK_TEST_PLUGIN");
@@ -80,25 +72,7 @@ static std::string findPluginPath()
     {
         return env;
     }
-    std::string buildPath = TEST_PLUGIN_BUILD_PATH;
-    if (fileExists(buildPath))
-    {
-        return buildPath;
-    }
-    char buf[1024];
-    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
-    if (n > 0)
-    {
-        buf[n] = '\0';
-        std::string exePath(buf);
-        std::string exeDir = exePath.substr(0, exePath.rfind('/'));
-        std::string installPath = exeDir + "/../lib/plugins/libTestPlugin.so";
-        if (fileExists(installPath))
-        {
-            return installPath;
-        }
-    }
-    return "";
+    return TEST_PLUGIN_BUILD_PATH;
 }
 
 int main(int argc, char *argv[])
@@ -110,7 +84,7 @@ int main(int argc, char *argv[])
     const std::string libId = "TestPlugin";
     PluginPath path;
     path.path = findPluginPath();
-    check(!path.path.empty(), "locate TestPlugin.so (env YOMK_TEST_PLUGIN / build dir / lib/plugins)");
+    check(!path.path.empty(), "locate TestPlugin.so (env YOMK_TEST_PLUGIN / build dir)");
     if (path.path.empty())
     {
         std::cout << "\n========== Test Summary ==========" << std::endl;

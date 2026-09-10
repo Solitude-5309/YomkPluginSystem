@@ -113,19 +113,19 @@ if [ $? -ne 0 ]; then
     return 1
 fi
 
-# 编译测试程序
+# 编译测试程序（仅本地构建，不随扩展安装）
 if [ "${BUILD_TEST}" = "ON" ]; then
     mkdir -p "${TEST_BUILD_DIR}"
     cd "${TEST_BUILD_DIR}" || return 1
 
-    cmake "${TEST_DIR}" -DCMAKE_PREFIX_PATH="${INSTALL_DIR};${YOMK_SERVER_PATH}" -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"
+    cmake "${TEST_DIR}" -DCMAKE_PREFIX_PATH="${INSTALL_DIR};${YOMK_SERVER_PATH}"
     if [ $? -ne 0 ]; then
         echo "测试程序 cmake 配置失败"
         cd "${_ORIG_DIR}"
         return 1
     fi
 
-    ${SUDO} cmake --build . --config Release --target install
+    cmake --build . --config Release
     if [ $? -ne 0 ]; then
         echo "测试程序编译失败"
         cd "${_ORIG_DIR}"
@@ -156,9 +156,9 @@ echo " 示例程序（安装于 ${INSTALL_DIR}/bin）:"
 echo "   - ExampleYomkPluginSystemBuilder"
 echo " 可直接运行 ExampleYomkPluginSystemBuilder 验证 workflow 构建示例"
 if [ "${BUILD_TEST}" = "ON" ]; then
-    echo " 测试程序列表（安装于 ${INSTALL_DIR}/bin）:"
-    for _t in "${INSTALL_DIR}/bin"/TestYomkPlugin*; do
-        [ -x "${_t}" ] && echo "   - $(basename "${_t}")"
+    echo " 测试程序（仅本地构建，未安装）:"
+    for _t in "${TEST_BUILD_DIR}"/TestYomkPlugin*; do
+        [ -x "${_t}" ] && echo "   - ${_t}"
     done
     echo " 可直接运行 TestYomkPluginSystem 验证"
 fi

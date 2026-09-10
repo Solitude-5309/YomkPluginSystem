@@ -25,9 +25,4 @@ target_compile_definitions(TestYomkPluginSystem PRIVATE
 )
 target_link_libraries(TestYomkPluginSystem PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
-# 测试程序随扩展一并安装到 <安装路径>/bin，供用户在任意终端直接运行验证
-# 测试程序可能有多个，此处显式列出全部测试目标名（不能用 ${PROJECT_NAME} 占位）
-install(TARGETS
-    TestYomkPluginSystem
-    RUNTIME DESTINATION bin
-)
+# 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
