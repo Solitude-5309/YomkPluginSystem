@@ -1,0 +1,7 @@
+#! yomk_plugin_system
+
+# 连接器配置
+ConnectionService@ConnectionService/lib/libConnectionService.so@ConnectionService/instances/ConnectionService.txt
+
+# 工作空间配置
+WorkspaceService@WorkspaceService/lib/libWorkspaceService.so@WorkspaceService/instances/WorkspaceService.txt

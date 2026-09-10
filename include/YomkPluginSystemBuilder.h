@@ -9,8 +9,9 @@ using namespace yomk;
 
 /*
  * YomkPluginSystemBuilder：插件系统构建编排层
- * 解析 .yomk 清单（模块目录名@实例名@实例文件，# 为注释），纯请求调用 Manager
- * 完成插件加载与实例创建（实例文件路径作为 instanceFile 透传），自身不持有插件/实例。
+ * 解析 .yomk 清单（实例名@动态库相对路径@实例配置文件相对路径，# 为注释，
+ * 后两段均相对清单所在目录），纯请求调用 Manager 完成插件加载与实例创建
+ * （实例配置文件绝对路径作为 instanceFile 透传），自身不持有插件/实例。
  */
 class YomkPluginSystemBuilder : public YomkService
 {
@@ -20,14 +21,14 @@ public:
     virtual int init() override;
 
 private:
-    /* 清单条目：模块目录名@实例名@实例文件 */
-    struct ManifestEntry
-    {
-        int lineNo = 0;
-        std::string moduleDir;    /* 模块目录名（动态库为 <模块目录>/lib/lib<模块目录名>.so） */
-        std::string instanceName; /* 实例名（同一插件内唯一） */
-        std::string instanceFile; /* 实例文件（位于 <模块目录>/instances/ 下） */
-    };
+  /* 清单条目：实例名@动态库相对路径@实例配置文件相对路径 */
+  struct ManifestEntry {
+    int lineNo = 0;
+    std::string instanceName; /* 实例名（系统唯一主键） */
+    std::string
+        libRelPath; /* 动态库相对清单所在目录的完整路径（含平台相关全名） */
+    std::string instanceFile; /* 实例配置文件相对清单所在目录的完整路径 */
+  };
 
     /* 请求接口 */
     YomkResponse build(YomkPkgPtr pkg);   /* BuildReq -> String 构建结果汇总 */
@@ -35,7 +36,8 @@ private:
     /* 内省接口 */
     YomkResponse infoAll(YomkPkgPtr pkg); /* -> String 最近一次构建的清单解析结果与状态 */
 
-    /* 清单解析：# 注释忽略（整行/行内），按 @ 切分校验三段 */
+    /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
+     * 按 @ 切分校验三段，路径段拒绝绝对路径 */
     YomkResponse parseManifest(const std::string &workflowPath, std::string &workflowDir,
                                std::vector<ManifestEntry> &entries);
 

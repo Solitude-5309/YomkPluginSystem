@@ -48,7 +48,17 @@ YomkResponse YomkPluginSystemBuilder::parseManifest(const std::string &workflowP
     }
     workflowDir = manifest.parent_path().string();
 
-    int lineNo = 0;
+    /* 首行格式标识：.yomk
+     * 后缀文件因用处不同格式各异，以标识区分；插件系统清单必须以此开头 */
+    static const char *kFormatMarker = "#! yomk_plugin_system";
+    std::string firstLine;
+    if (!std::getline(in, firstLine) || trim(firstLine) != kFormatMarker) {
+      return {YomkResponse::eNo,
+              "manifest line 1: format marker not found (expect '" +
+                  std::string(kFormatMarker) + "')"};
+    }
+
+    int lineNo = 1; /* 首行已消费为格式标识，条目行号从 2 起 */
     std::string line;
     while (std::getline(in, line))
     {
@@ -64,23 +74,36 @@ YomkResponse YomkPluginSystemBuilder::parseManifest(const std::string &workflowP
         {
             continue;
         }
-        /* 按 @ 切分，必须恰好三段：模块目录名@实例名@实例文件 */
+        /* 按 @ 切分，必须恰好三段：实例名@动态库相对路径@实例配置文件相对路径
+         */
         size_t p1 = line.find('@');
         size_t p2 = (p1 == std::string::npos) ? std::string::npos : line.find('@', p1 + 1);
         size_t p3 = (p2 == std::string::npos) ? std::string::npos : line.find('@', p2 + 1);
         if (p1 == std::string::npos || p2 == std::string::npos || p3 != std::string::npos)
         {
-            return {YomkResponse::eNo,
-                    "manifest line " + std::to_string(lineNo) + ": expect moduleDir@instanceName@instanceFile"};
+          return {YomkResponse::eNo,
+                  "manifest line " + std::to_string(lineNo) +
+                      ": expect instanceName@libRelPath@instanceFileRelPath"};
         }
         ManifestEntry entry;
         entry.lineNo = lineNo;
-        entry.moduleDir = trim(line.substr(0, p1));
-        entry.instanceName = trim(line.substr(p1 + 1, p2 - p1 - 1));
+        entry.instanceName = trim(line.substr(0, p1));
+        entry.libRelPath = trim(line.substr(p1 + 1, p2 - p1 - 1));
         entry.instanceFile = trim(line.substr(p2 + 1));
-        if (entry.moduleDir.empty() || entry.instanceName.empty() || entry.instanceFile.empty())
-        {
-            return {YomkResponse::eNo, "manifest line " + std::to_string(lineNo) + ": empty segment"};
+        if (entry.instanceName.empty() || entry.libRelPath.empty() ||
+            entry.instanceFile.empty()) {
+          return {YomkResponse::eNo, "manifest line " + std::to_string(lineNo) +
+                                         ": empty segment"};
+        }
+        /* 格式契约为相对路径：路径段拒绝绝对路径 */
+        if (entry.libRelPath[0] == '/') {
+          return {YomkResponse::eNo, "manifest line " + std::to_string(lineNo) +
+                                         ": lib path must be relative"};
+        }
+        if (entry.instanceFile[0] == '/') {
+          return {YomkResponse::eNo,
+                  "manifest line " + std::to_string(lineNo) +
+                      ": instance file path must be relative"};
         }
         entries.push_back(entry);
     }
@@ -121,16 +144,10 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
         for (const auto &entry : entries)
         {
             const std::string lineTag = "manifest line " + std::to_string(entry.lineNo);
-            const std::string modulePath = workflowDir + "/" + entry.moduleDir;
-            const std::string instancePath = modulePath + "/instances/" + entry.instanceFile;
-            const std::string soPath = modulePath + "/lib/lib" + entry.moduleDir + ".so";
+            const std::string instancePath =
+                workflowDir + "/" + entry.instanceFile;
+            const std::string soPath = workflowDir + "/" + entry.libRelPath;
 
-            if (!fs::is_directory(modulePath))
-            {
-                std::string msg = lineTag + ": module dir not found: " + modulePath;
-                recordBuild(req->d.workflowPath, msg, entryLines);
-                return {YomkResponse::eNo, msg};
-            }
             if (!fs::is_regular_file(instancePath))
             {
                 std::string msg = lineTag + ": instance file not found: " + instancePath;
@@ -181,8 +198,9 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
                 return {YomkResponse::eNo, msg};
             }
             ++createdInstances;
-            entryLines.push_back(entry.moduleDir + "@" + entry.instanceName + "@" + entry.instanceFile +
-                                 " -> " + libId + " ok");
+            entryLines.push_back(entry.instanceName + "@" + entry.libRelPath +
+                                 "@" + entry.instanceFile + " -> " + libId +
+                                 " ok");
         }
 
         std::string summary = "plugins:" + std::to_string(loadedLibs.size()) +

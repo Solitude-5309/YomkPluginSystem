@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(YomkServer REQUIRED)
 
-# 插件动态库：产物输出到模块目录 lib/，Builder 运行时按 <模块目录>/lib/lib<模块目录名>.so 定位
+# 插件动态库：产物输出到模块目录 lib/，清单以完整相对路径（ConnectionService/lib/libConnectionService.so）引用
 add_library(ConnectionService SHARED
     src/ConnectionService.cpp
 )

@@ -85,7 +85,8 @@ int main(int argc, char *argv[])
 
     namespace fs = std::filesystem;
     const std::string manifest = WORKFLOW_MANIFEST_PATH;
-    check(fs::is_regular_file(manifest), "locate workflow manifest (examples/workflow/my_plugin_system.yomk)");
+    check(fs::is_regular_file(manifest),
+          "locate workflow manifest (examples/workflow/manifest.yomk)");
 
     /* ---------- 用例1：版本 ---------- */
     check(respString(YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr)) ==
@@ -95,7 +96,8 @@ int main(int argc, char *argv[])
     /* ---------- 用例2：清单路径不存在返回 eNo ---------- */
     check(isNo(buildWorkflow("/nonexistent/no_such.yomk")), "build with nonexistent manifest returns eNo");
 
-    /* ---------- 用例3：正常构建（清单含整行注释、行内注释、空行） ---------- */
+    /* ---------- 用例3：正常构建（清单含格式标识、整行注释、空行） ----------
+     */
     {
         YomkResponse resp = buildWorkflow(manifest);
         check(isOk(resp) && respString(resp) == "plugins:2 instances:2",
@@ -131,10 +133,18 @@ int main(int argc, char *argv[])
     /* ---------- 用例4：内省 /all 反映最近一次构建 ---------- */
     {
         std::string dump = respString(YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr));
-        check(dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
-                  dump.find("ConnectionService@ConnectionService@ConnectionService.txt") != std::string::npos &&
-                  dump.find("WorkspaceService@WorkspaceService@WorkspaceService.txt") != std::string::npos,
-              "Builder /all shows last build entries");
+        check(
+            dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
+                dump.find(
+                    "ConnectionService@ConnectionService/lib/"
+                    "libConnectionService.so@"
+                    "ConnectionService/instances/ConnectionService.txt") !=
+                    std::string::npos &&
+                dump.find("WorkspaceService@WorkspaceService/lib/"
+                          "libWorkspaceService.so@"
+                          "WorkspaceService/instances/WorkspaceService.txt") !=
+                    std::string::npos,
+            "Builder /all shows last build entries");
     }
 
     /* ---------- 用例5：重复构建（插件幂等跳过，重名实例按现有语义报错） ---------- */
@@ -151,23 +161,37 @@ int main(int argc, char *argv[])
         fs::create_directories(tmp / "moduleA" / "instances");
         writeFile(tmp / "moduleA" / "instances" / "a.txt", "name: a\n");
 
+        /* 缺失首行格式标识（条目本身合法，仅标识缺失） */
+        writeFile(tmp / "case_marker.yomk",
+                  "inst-a@moduleA/libmoduleA.so@moduleA/instances/a.txt\n");
+        check(isNo(buildWorkflow((tmp / "case_marker.yomk").string())),
+              "manifest without format marker returns eNo");
+
         /* 段数不足 */
-        writeFile(tmp / "case_segment.yomk", "only.two\n");
+        writeFile(tmp / "case_segment.yomk",
+                  "#! yomk_plugin_system\nonly.two\n");
         check(isNo(buildWorkflow((tmp / "case_segment.yomk").string())),
               "manifest with wrong segment count returns eNo");
 
-        /* 模块目录不存在 */
-        writeFile(tmp / "case_module.yomk", "NoSuchModule@i@f.txt\n");
-        check(isNo(buildWorkflow((tmp / "case_module.yomk").string())),
-              "manifest with missing module dir returns eNo");
+        /* 绝对路径拒绝 */
+        writeFile(tmp / "case_abs.yomk",
+                  "#! yomk_plugin_system\ninst-a@/abs/lib.so@a.txt\n");
+        check(isNo(buildWorkflow((tmp / "case_abs.yomk").string())),
+              "manifest with absolute lib path returns eNo");
 
         /* 实例文件缺失 */
-        writeFile(tmp / "case_instance.yomk", "moduleA@inst-a@missing.txt\n");
+        writeFile(tmp / "case_instance.yomk",
+                  "#! "
+                  "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
+                  "instances/missing.txt\n");
         check(isNo(buildWorkflow((tmp / "case_instance.yomk").string())),
               "manifest with missing instance file returns eNo");
 
-        /* 模块目录缺 so */
-        writeFile(tmp / "case_so.yomk", "moduleA@inst-a@a.txt\n");
+        /* 缺 so */
+        writeFile(tmp / "case_so.yomk",
+                  "#! "
+                  "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
+                  "instances/a.txt\n");
         check(isNo(buildWorkflow((tmp / "case_so.yomk").string())),
               "manifest with missing plugin lib returns eNo");
 

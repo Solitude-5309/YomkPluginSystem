@@ -44,7 +44,7 @@ struct DestroyReq
 
 struct BuildReq
 {
-    std::string workflowPath; /* my_plugin_system.yomk 清单文件路径 */
+    std::string workflowPath; /* manifest.yomk 清单文件路径 */
 };
 
 struct InstanceInfo

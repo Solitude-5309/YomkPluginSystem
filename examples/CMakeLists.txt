@@ -18,7 +18,7 @@ add_subdirectory(workflow/WorkspaceService WorkspaceService)
 # Builder 演示程序：清单路径编译期固化到 workflow 源码目录
 add_executable(ExampleYomkPluginSystemBuilder ExampleYomkPluginSystemBuilder.cpp)
 target_compile_definitions(ExampleYomkPluginSystemBuilder PRIVATE
-    WORKFLOW_MANIFEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/workflow/my_plugin_system.yomk"
+    WORKFLOW_MANIFEST_PATH="${CMAKE_CURRENT_SOURCE_DIR}/workflow/manifest.yomk"
     EXTENSION_VERSION="${YomkPluginSystem_VERSION}"
 )
 target_link_libraries(ExampleYomkPluginSystemBuilder PRIVATE

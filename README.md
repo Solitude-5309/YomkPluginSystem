@@ -61,18 +61,21 @@ YOMK_PLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
 | `/YomkPluginSystemBuilder/version` | 无 | 版本查询 |
 | `/YomkPluginSystemBuilder/all` | 无 | 内省：最近一次构建的清单解析结果与状态 |
 
-清单文件（如 `examples/workflow/my_plugin_system.yomk`）每行一个条目，格式为 `模块目录名@实例名@实例文件`（`@` 分隔三段）：
+清单文件（如 `examples/workflow/manifest.yomk`）首行必须为格式标识 `#! yomk_plugin_system`（`.yomk` 后缀文件因用处不同格式各异，以首行标识区分；缺失、不在首行或不匹配则解析失败并报错），其后每行一个条目，格式为 `实例名@动态库相对路径@实例配置文件相对路径`（`@` 分隔三段，后两段均为相对清单所在目录的完整路径）：
 
 ```
+#! yomk_plugin_system
+
 # 连接器
-ConnectionService@ConnectionService@ConnectionService.txt   # 连接器配置
+ConnectionService@ConnectionService/lib/libConnectionService.so@ConnectionService/instances/ConnectionService.txt
 ```
 
 - 以 `#` 开头的整行为注释，条目行中 `#` 之后为行内注释，解析时均忽略；空行跳过
-- 模块目录名 → `<清单所在目录>/<模块目录名>`，动态库固定为 `<模块目录>/lib/lib<模块目录名>.so`
-- 实例文件 → `<模块目录>/instances/<实例文件>`，其绝对路径作为 `instanceFile` 透传给插件工厂（不读取内容）
+- 动态库名须含平台相关文件名全名（Linux `libX.so` / macOS `libX.dylib` / Windows `X.dll`），跨平台部署时各平台使用各自清单文件；库名与目录布局完全解耦
+- 实例配置文件的绝对路径作为 `instanceFile` 透传给插件工厂（不读取内容）
+- `<模块>/lib/`、`<模块>/instances/` 仅为示例工程的目录组织约定，Builder 不强制
 
-build 流程：解析清单 → 校验模块目录/实例文件/动态库存在 → `/YomkPluginManager/load` 加载（已加载幂等跳过）→ `/YomkPluginManager/create_instance` 按清单实例名创建。任一步失败返回 `eNo` 并指明清单行号。
+build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/YomkPluginManager/load` 加载（已加载幂等跳过）→ `/YomkPluginManager/create_instance` 按清单实例名创建。任一步失败返回 `eNo` 并指明清单行号。
 
 完整可构建示例见 `examples/workflow/`（两个示例插件模块 + 清单），配套演示程序见 `examples/ExampleYomkPluginSystemBuilder.cpp`（随扩展默认编译安装，运行可验证 workflow 构建）。
 
