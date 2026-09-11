@@ -102,8 +102,8 @@ int main(int argc, char* argv[])
      * 请求并自动打印） ---------- */
     {
         YomkResponse resp = YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
-        check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
-              "Builder /version returns version string");
+        check(
+            isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0, "Builder /version returns version string");
         /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
         YOMKPLUGIN_VERSION();
     }
@@ -112,8 +112,9 @@ int main(int argc, char* argv[])
     {
         PluginPath bad;
         bad.path = "/nonexistent/libNoSuchPlugin.so";
-        check(isNo(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, bad))),
-              "load nonexistent path returns eNo");
+        check(
+            isNo(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, bad))),
+            "load nonexistent path returns eNo");
     }
 
     /* ---------- 用例1：load + list ---------- */
@@ -168,28 +169,33 @@ int main(int argc, char* argv[])
     }
 
     /* ---------- 用例3：有存活实例时卸载被拒绝 ---------- */
-    check(isNo(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))),
-          "try_unload with alive instances returns eNo");
+    check(
+        isNo(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))),
+        "try_unload with alive instances returns eNo");
     check(pluginCount() == 1, "plugin still listed after failed try_unload");
-    check(isNo(YOMK_REQUEST("/YomkPluginLoader/unloadLib", YomkMkPtr(String, libId))),
-          "Loader /unloadLib with alive instances returns eNo (reference protection)");
+    check(
+        isNo(YOMK_REQUEST("/YomkPluginLoader/unloadLib", YomkMkPtr(String, libId))),
+        "Loader /unloadLib with alive instances returns eNo (reference protection)");
 
     /* ---------- 逐个销毁实例 ---------- */
     {
         DestroyReq req;
         req.libId = libId;
         req.instanceName = instName1;
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, req))),
-              "destroy_instance #1");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, req))),
+            "destroy_instance #1");
         req.instanceName = instName2;
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, req))),
-              "destroy_instance #2");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, req))),
+            "destroy_instance #2");
         check(instanceCount() == 0, "instance table empty after destroy");
     }
 
     /* ---------- 用例4a：销毁全部后 try_unload 成功 ---------- */
-    check(isOk(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))),
-          "try_unload succeeds after all instances destroyed");
+    check(
+        isOk(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))),
+        "try_unload succeeds after all instances destroyed");
     check(pluginCount() == 0 && instanceCount() == 0, "plugin table and instance table empty");
 
     /* ---------- 用例4b：重载 + force_unload ---------- */
@@ -198,10 +204,12 @@ int main(int argc, char* argv[])
         CreateReq req;
         req.libId = libId;
         req.instanceName = "inst-reload";
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "create instance after reload");
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
-              "force_unload deletes all instances and unloads");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+            "create instance after reload");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
+            "force_unload deletes all instances and unloads");
         check(pluginCount() == 0 && instanceCount() == 0, "tables empty after force_unload");
         check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))), "reload after force_unload");
     }
@@ -211,20 +219,24 @@ int main(int argc, char* argv[])
         CreateReq req;
         req.libId = libId;
         req.instanceName = "dup";
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "create_instance with instanceName=dup");
-        check(isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "duplicate instance name returns eNo");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+            "create_instance with instanceName=dup");
+        check(
+            isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+            "duplicate instance name returns eNo");
         req.instanceName = "";
-        check(isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "empty instance name returns eNo");
+        check(
+            isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+            "empty instance name returns eNo");
         DestroyReq dreq;
         dreq.libId = libId;
         dreq.instanceName = "dup";
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, dreq))),
-              "destroy instance dup");
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))),
-              "final try_unload cleanup");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, dreq))),
+            "destroy instance dup");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))), "final try_unload cleanup");
     }
 
     /* ---------- 用例6：内省 ---------- */
@@ -246,19 +258,22 @@ int main(int argc, char* argv[])
         check(hasLoadType && hasUnloadType, "YOMK_SERVER_INFO_FUNCTIONS shows type marks");
 
         /* 空态内省：计数归零 */
-        check(respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:0") == 0,
-              "Loader /all reports libs:0 after unload");
-        check(respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr)).find("plugins:0 instances:0") == 0,
-              "Manager /all reports plugins:0 instances:0 after unload");
+        check(
+            respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:0") == 0,
+            "Loader /all reports libs:0 after unload");
+        check(
+            respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr)).find("plugins:0 instances:0") == 0,
+            "Manager /all reports plugins:0 instances:0 after unload");
 
         /* 加载态内省：列表/单实体/全量 dump */
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))),
-              "load again for introspection");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))), "load again for introspection");
         CreateReq req;
         req.libId = libId;
         req.instanceName = "inst-introspect";
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
-              "create instance for introspection");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
+            "create instance for introspection");
 
         resp = YOMK_REQUEST("/YomkPluginLoader/libs", nullptr);
         bool loaderLibsOk = false;
@@ -268,11 +283,13 @@ int main(int argc, char* argv[])
             loaderLibsOk = !arr->d.empty() && arr->d[0] == libId;
         }
         check(loaderLibsOk, "Loader INFO_LIBS lists TestPlugin");
-        check(respString(YOMK_REQUEST("/YomkPluginLoader/lib", YomkMkPtr(String, libId))).find("abi:1 alive:1") !=
-                  std::string::npos,
-              "Loader INFO_LIB shows abi and alive count");
-        check(respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:1") == 0,
-              "Loader INFO_ALL header libs:1");
+        check(
+            respString(YOMK_REQUEST("/YomkPluginLoader/lib", YomkMkPtr(String, libId))).find("abi:1 alive:1") !=
+                std::string::npos,
+            "Loader INFO_LIB shows abi and alive count");
+        check(
+            respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:1") == 0,
+            "Loader INFO_ALL header libs:1");
 
         resp = YOMK_REQUEST("/YomkPluginManager/plugins", nullptr);
         bool mgrPluginsOk = false;
@@ -283,17 +300,21 @@ int main(int argc, char* argv[])
         }
         check(mgrPluginsOk, "Manager INFO_PLUGINS lists TestPlugin");
         std::string line = respString(YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, libId)));
-        check(line.find("[demo]") != std::string::npos && line.find("instances:1") != std::string::npos,
-              "Manager INFO_PLUGIN shows type and instance count");
+        check(
+            line.find("[demo]") != std::string::npos && line.find("instances:1") != std::string::npos,
+            "Manager INFO_PLUGIN shows type and instance count");
         std::string dump = respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr));
-        check(dump.find("plugins:1 instances:1") == 0 && dump.find("[demo]") != std::string::npos,
-              "Manager INFO_ALL header and instance detail");
-        check(isNo(YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, std::string("NoSuchPlugin")))),
-              "INFO_PLUGIN unknown returns eNo");
+        check(
+            dump.find("plugins:1 instances:1") == 0 && dump.find("[demo]") != std::string::npos,
+            "Manager INFO_ALL header and instance detail");
+        check(
+            isNo(YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, std::string("NoSuchPlugin")))),
+            "INFO_PLUGIN unknown returns eNo");
 
         /* 清理 */
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
-              "final force_unload cleanup");
+        check(
+            isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
+            "final force_unload cleanup");
     }
 
     std::cout << "\n========== Test Summary ==========" << std::endl;

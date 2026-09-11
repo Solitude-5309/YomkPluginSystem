@@ -25,12 +25,13 @@ private:
     std::string m_instanceFile;
 };
 
-static const YomkPluginMeta g_meta = {YOMKPLUGIN_ABI_VERSION,
-                                      "WorkspaceService",
-                                      "workflow",
-                                      "1.0.0",
-                                      "Yomk",
-                                      "Workflow example: workspace service plugin"};
+static const YomkPluginMeta g_meta = {
+    YOMKPLUGIN_ABI_VERSION,
+    "WorkspaceService",
+    "workflow",
+    "1.0.0",
+    "Yomk",
+    "Workflow example: workspace service plugin"};
 
 static const YomkPluginMeta* metaFn()
 {

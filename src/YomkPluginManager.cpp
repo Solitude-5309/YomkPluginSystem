@@ -456,8 +456,8 @@ std::string YomkPluginManager::pluginInfoLine(const std::string& libId, const Pl
            " instances:" + std::to_string(instanceCount);
 }
 
-std::string YomkPluginManager::instanceInfoLine(const std::string& instanceName,
-                                                const std::shared_ptr<YomkPluginInterface>& inst) const
+std::string YomkPluginManager::instanceInfoLine(
+    const std::string& instanceName, const std::shared_ptr<YomkPluginInterface>& inst) const
 {
     std::string type = inst->instanceType() ? inst->instanceType() : "";
     std::string id = inst->instanceId() ? inst->instanceId() : "";

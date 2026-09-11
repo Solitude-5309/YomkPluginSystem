@@ -132,19 +132,20 @@ int main(int argc, char* argv[])
     /* ---------- 用例4：内省 /all 聚合（构建 + 插件/实例 + 已加载库） ---------- */
     {
         std::string dump = respString(YOMKPLUGIN_INFO_ALL());
-        check(dump.find("== build ==") != std::string::npos &&
-                  dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
-                  dump.find("ConnectionService@ConnectionService/lib/"
-                            "libConnectionService.so@"
-                            "ConnectionService/instances/ConnectionService.txt") != std::string::npos &&
-                  dump.find("WorkspaceService@WorkspaceService/lib/"
-                            "libWorkspaceService.so@"
-                            "WorkspaceService/instances/WorkspaceService.txt") != std::string::npos &&
-                  dump.find("== plugins ==") != std::string::npos &&
-                  dump.find("ConnectionService [workflow]") != std::string::npos &&
-                  dump.find("WorkspaceService [workflow]") != std::string::npos &&
-                  dump.find("== libs ==") != std::string::npos && dump.find("libs:2") != std::string::npos,
-              "Builder /all aggregates build/plugins/libs");
+        check(
+            dump.find("== build ==") != std::string::npos &&
+                dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
+                dump.find("ConnectionService@ConnectionService/lib/"
+                          "libConnectionService.so@"
+                          "ConnectionService/instances/ConnectionService.txt") != std::string::npos &&
+                dump.find("WorkspaceService@WorkspaceService/lib/"
+                          "libWorkspaceService.so@"
+                          "WorkspaceService/instances/WorkspaceService.txt") != std::string::npos &&
+                dump.find("== plugins ==") != std::string::npos &&
+                dump.find("ConnectionService [workflow]") != std::string::npos &&
+                dump.find("WorkspaceService [workflow]") != std::string::npos &&
+                dump.find("== libs ==") != std::string::npos && dump.find("libs:2") != std::string::npos,
+            "Builder /all aggregates build/plugins/libs");
     }
 
     /* ---------- 用例5：重复构建（插件幂等跳过，重名实例按现有语义报错） ---------- */
@@ -167,26 +168,29 @@ int main(int argc, char* argv[])
 
         /* 段数不足 */
         writeFile(tmp / "case_segment.yomk", "#! yomk_plugin_system\nonly.two\n");
-        check(isNo(buildWorkflow((tmp / "case_segment.yomk").string())),
-              "manifest with wrong segment count returns eNo");
+        check(
+            isNo(buildWorkflow((tmp / "case_segment.yomk").string())), "manifest with wrong segment count returns eNo");
 
         /* 绝对路径拒绝 */
         writeFile(tmp / "case_abs.yomk", "#! yomk_plugin_system\ninst-a@/abs/lib.so@a.txt\n");
         check(isNo(buildWorkflow((tmp / "case_abs.yomk").string())), "manifest with absolute lib path returns eNo");
 
         /* 实例文件缺失 */
-        writeFile(tmp / "case_instance.yomk",
-                  "#! "
-                  "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
-                  "instances/missing.txt\n");
-        check(isNo(buildWorkflow((tmp / "case_instance.yomk").string())),
-              "manifest with missing instance file returns eNo");
+        writeFile(
+            tmp / "case_instance.yomk",
+            "#! "
+            "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
+            "instances/missing.txt\n");
+        check(
+            isNo(buildWorkflow((tmp / "case_instance.yomk").string())),
+            "manifest with missing instance file returns eNo");
 
         /* 缺 so */
-        writeFile(tmp / "case_so.yomk",
-                  "#! "
-                  "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
-                  "instances/a.txt\n");
+        writeFile(
+            tmp / "case_so.yomk",
+            "#! "
+            "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
+            "instances/a.txt\n");
         check(isNo(buildWorkflow((tmp / "case_so.yomk").string())), "manifest with missing plugin lib returns eNo");
 
         fs::remove_all(tmp);

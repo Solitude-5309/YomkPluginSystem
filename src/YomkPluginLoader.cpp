@@ -56,8 +56,10 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         if (meta->abi_version != YOMKPLUGIN_ABI_VERSION)
         {
             dlclose(handle);
-            return {YomkResponse::eNo, "abi version mismatch: plugin " + std::to_string(meta->abi_version) + ", host " +
-                                           std::to_string(YOMKPLUGIN_ABI_VERSION)};
+            return {
+                YomkResponse::eNo,
+                "abi version mismatch: plugin " + std::to_string(meta->abi_version) + ", host " +
+                    std::to_string(YOMKPLUGIN_ABI_VERSION)};
         }
         libId = meta->name;
 

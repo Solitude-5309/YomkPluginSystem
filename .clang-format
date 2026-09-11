@@ -9,7 +9,7 @@ UseTab: Never
 ContinuationIndentWidth: 4
 AccessModifierOffset: -4
 # 对齐
-AlignAfterOpenBracket: Align
+AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Left
@@ -28,8 +28,8 @@ AlwaysBreakTemplateDeclarations: Yes
 # 括号：左大括号换行（Allman，类/函数/控制语句全部换行）
 BreakBeforeBraces: Allman
 # 其他
-BinPackArguments: true
-BinPackParameters: true
+BinPackArguments: false
+BinPackParameters: false
 BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon

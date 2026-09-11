@@ -57,8 +57,8 @@ private:
 
     /* 内省行格式化（调用方已持锁） */
     std::string pluginInfoLine(const std::string& libId, const PluginRecord& rec) const;
-    std::string instanceInfoLine(const std::string& instanceName,
-                                 const std::shared_ptr<YomkPluginInterface>& inst) const;
+    std::string instanceInfoLine(
+        const std::string& instanceName, const std::shared_ptr<YomkPluginInterface>& inst) const;
 
     std::mutex m_mutex;
     /* 插件表：扁平 map，libId = meta.name */

@@ -54,12 +54,12 @@ private:
 
     /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
      * 按 @ 切分校验三段，路径段拒绝绝对路径 */
-    YomkResponse parseManifest(const std::string& workflowPath, std::string& workflowDir,
-                               std::vector<ManifestEntry>& entries);
+    YomkResponse parseManifest(
+        const std::string& workflowPath, std::string& workflowDir, std::vector<ManifestEntry>& entries);
 
     /* 记录最近一次构建状态（内省用） */
-    void recordBuild(const std::string& manifest, const std::string& result,
-                     const std::vector<std::string>& entryLines);
+    void recordBuild(
+        const std::string& manifest, const std::string& result, const std::vector<std::string>& entryLines);
 
     std::mutex m_mutex;
     /* 最近一次构建的清单路径 */
