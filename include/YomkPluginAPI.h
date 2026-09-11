@@ -8,10 +8,10 @@
  * 头文件分层（单向依赖，无 include 环）：
  *   YomkPluginMeta.h / YomkPluginInterface.h（ABI 叶子）
  *   → YomkPluginMsgs.h（消息数据类）
- *   → 各服务声明头：YomkPluginLoader.h（机制层，含宿主 dlsym 契约：
- *     导出符号宏与函数类型）/ YomkPluginManager.h（数据层）/
- *     YomkPluginSystemBuilder.h（编排层）
+ *   → YomkPluginSystemBuilder.h（编排层，唯一用户可感知服务）
  *   → 本文件仅作聚合入口，无人反向依赖，内部 include 顺序不影响正确性。
+ * 内部服务声明头 src/YomkPluginLoader.h（机制层）/ src/YomkPluginManager.h
+ * （数据层）不随安装导出，仅编译扩展内部可见。
  */
 /* YOMK_INIT / YOMK_NEW_SERVICE / YOMK_REQUEST / YomkMkPtr */
 #include <YomkServer/YomkAPI.h>
@@ -25,7 +25,7 @@
 
 /*
  * 插件导出契约：以 extern "C" 导出三个固定符号（符号名宏与导出函数类型
- * 定义在 YomkPluginLoader.h，随机制层分发；插件侧无需直接使用）：
+ * 定义在内部头 src/YomkPluginLoader.h，仅宿主 dlsym 使用；插件侧无需直接使用）：
  *   const YomkPluginMeta *yomk_plugin_meta(); 返回静态常量指针
  *   YomkPluginInterface *yomk_plugin_create_instance(const char *instance_name, const char *instance_file);
  *   void yomk_plugin_delete_instance(YomkPluginInterface *instance);  内部 delete
@@ -52,10 +52,6 @@
 
 /* ------------------------- 消息数据类与服务声明 ------------------------- */
 
-/* 机制层服务声明（由 YomkPluginSystemBuilder::init 内部注册） */
-#include "YomkPluginLoader.h"
-/* 数据层服务声明（由 YomkPluginSystemBuilder::init 内部注册） */
-#include "YomkPluginManager.h"
 /* 消息数据类：结构体 + YomkMsg 注册 */
 #include "YomkPluginMsgs.h"
 /* 编排层服务声明 */

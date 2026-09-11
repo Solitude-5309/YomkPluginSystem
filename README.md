@@ -86,10 +86,15 @@ build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/Y
 | `YomkPluginInterface.h` | 插件实例抽象接口：instanceName（系统唯一主键）、instanceType、instanceId（业务字段，默认等于实例名，可覆写）、userData |
 | `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMKPLUGIN_EXPORT` 一键导出宏 + 7 个门面宏（BUILD / UNLOAD / TRY_UNLOAD / INFO_ALL / INFO_PLUGINS / INFO_INSTANCES / VERSION） |
 | `YomkPluginSystemBuilder.h` | 门面服务声明（唯一用户服务） |
+
+位于 `src/`、不随 install 分发的内部声明头（仅编译扩展内部可见）：
+
+| 头文件 | 内容 |
+|--------|------|
 | `YomkPluginLoader.h` | 机制层服务声明 + 宿主 dlsym 契约（导出符号宏与函数类型），内部用 |
 | `YomkPluginManager.h` | 数据层服务声明，内部用 |
 
-头文件单向分层：ABI 叶子（Meta/Interface）→ 消息数据类（Msgs）→ 服务声明头（Loader/Manager/Builder）→ 聚合入口（API），无 include 环。以上头文件均随 install 分发；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可，Loader/Manager 服务声明头仅供扩展内部与白盒测试直调 URL，用户一律经 `YomkPluginAPI.h` 的门面宏使用。
+头文件单向分层：ABI 叶子（Meta/Interface）→ 消息数据类（Msgs）→ 服务声明头（Builder / 内部 Loader/Manager）→ 聚合入口（API），无 include 环。随 install 分发的公共头仅上述 5 个；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可，内部服务（Loader/Manager）声明对用户不可见，白盒测试亦仅经门面宏或 URL 直调访问。
 
 插件须以 `extern "C"` 导出三个固定符号：
 
@@ -168,10 +173,10 @@ YomkPluginSystem/
 │   ├── YomkPluginMeta.h          # ABI：插件元数据结构
 │   ├── YomkPluginInterface.h     # ABI：插件实例接口
 │   ├── YomkPluginMsgs.h          # 消息数据类 + YomkMsg 注册
-│   ├── YomkPluginLoader.h        # 机制层服务声明
-│   ├── YomkPluginManager.h       # 数据层服务声明
-│   └── YomkPluginSystemBuilder.h # 编排层服务声明
+│   └── YomkPluginSystemBuilder.h # 编排层服务声明（唯一用户服务）
 ├── src/                          # 内部实现（不随 install 分发）
+│   ├── YomkPluginLoader.h        # 机制层服务声明（含宿主 dlsym 契约）
+│   ├── YomkPluginManager.h       # 数据层服务声明
 │   ├── YomkPluginLoader.cpp      # 机制层服务
 │   ├── YomkPluginManager.cpp     # 数据层服务
 │   └── YomkPluginSystemBuilder.cpp # 编排层服务
