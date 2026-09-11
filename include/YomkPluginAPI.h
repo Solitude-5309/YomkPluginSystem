@@ -3,7 +3,7 @@
 /*
  * YomkPluginSystem 统一 API 入口：插件开发者与宿主用户均只需
  *   #include <YomkPluginSystem/YomkPluginAPI.h>
- * 即可获得框架 API、ABI 契约、消息数据类、服务声明与全量请求宏。
+ * 即可获得框架 API、ABI 契约、消息数据类、服务声明与门面请求宏。
  *
  * 头文件分层（单向依赖，无 include 环）：
  *   YomkPluginMeta.h / YomkPluginInterface.h（ABI 叶子）
@@ -52,83 +52,35 @@
 
 /* ------------------------- 消息数据类与服务声明 ------------------------- */
 
-/* 机制层服务声明（宿主注册用） */
+/* 机制层服务声明（由 YomkPluginSystemBuilder::init 内部注册） */
 #include "YomkPluginLoader.h"
-/* 数据层服务声明 */
+/* 数据层服务声明（由 YomkPluginSystemBuilder::init 内部注册） */
 #include "YomkPluginManager.h"
 /* 消息数据类：结构体 + YomkMsg 注册 */
 #include "YomkPluginMsgs.h"
 /* 编排层服务声明 */
 #include "YomkPluginSystemBuilder.h"
 
-/* ------------------------- 用户 API 宏（风格对齐框架 YOMK_CONTEXT_INFO_*） ------------------------- */
+/* ------------------------- 用户 API 宏（Builder 唯一用户门面） ------------------------- */
 
-/* 一键注册三个扩展服务（宿主在 YOMK_INIT 后调用一次） */
-#define YOMKPLUGIN_NEW_SERVICES()                  \
-    do                                             \
-    {                                              \
-        YOMK_NEW_SERVICE(YomkPluginLoader);        \
-        YOMK_NEW_SERVICE(YomkPluginManager);       \
-        YOMK_NEW_SERVICE(YomkPluginSystemBuilder); \
-    } while (0)
-
-/* ------------------------- Loader：机制层 ------------------------- */
-
-/* 加载 so 文件到进程（libId = so 文件名去扩展名），返回 PluginMeta */
-#define YOMKPLUGIN_LOADER_LOAD_LIB(path) \
-    YOMK_REQUEST("/YomkPluginLoader/loadLib", YomkMkPtr(PluginPath, PluginPath{path}))
-/* 卸载指定插件库（引用计数归零才真正 dlclose），返回 String(ok/msg) */
-#define YOMKPLUGIN_LOADER_UNLOAD_LIB(libId) YOMK_REQUEST("/YomkPluginLoader/unloadLib", YomkMkPtr(String, libId))
-/* 查询单库元信息，返回 String(PluginMeta 序列化) */
-#define YOMKPLUGIN_LOADER_META(libId) YOMK_REQUEST("/YomkPluginLoader/meta", YomkMkPtr(String, libId))
-/* 创建插件实例并注入 instance_name，返回 PluginInstance(进程内直接持有的接口指针) */
-#define YOMKPLUGIN_LOADER_CREATE(libId, instanceName, instanceFile) \
-    YOMK_REQUEST("/YomkPluginLoader/create", YomkMkPtr(CreateReq, CreateReq{libId, instanceName, instanceFile}))
-/* 销毁实例（参数为 create 返回包 unpack 后的 inst->d:
- * shared_ptr<YomkPluginInterface>），返回 String(ok/msg) */
-#define YOMKPLUGIN_LOADER_DELETE(instance) YOMK_REQUEST("/YomkPluginLoader/delete", YomkMkPtr(PluginInstance, instance))
-
-/* Loader：机制层内省（已加载库列表 / 单库元信息 / 全量 dump） */
-#define YOMKPLUGIN_LOADER_INFO_LIBS() YOMK_REQUEST("/YomkPluginLoader/libs", nullptr)
-#define YOMKPLUGIN_LOADER_INFO_LIB(libId) YOMK_REQUEST("/YomkPluginLoader/lib", YomkMkPtr(String, libId))
-#define YOMKPLUGIN_LOADER_INFO_ALL() YOMK_REQUEST("/YomkPluginLoader/all", nullptr)
-
-/* ------------------------- Manager：数据层 ------------------------- */
-
-/* 加载 so 并登记插件表（不自动建实例），返回 String(libId) */
-#define YOMKPLUGIN_MANAGER_LOAD(path) YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, PluginPath{path}))
-/* 尝试卸载：有存活实例则失败并返回实例数，返回 String(ok/msg) */
-#define YOMKPLUGIN_MANAGER_TRY_UNLOAD(libId) YOMK_REQUEST("/YomkPluginManager/try_unload", YomkMkPtr(String, libId))
-/* 强制卸载：先销毁全部实例再卸载，返回 String(ok/msg) */
-#define YOMKPLUGIN_MANAGER_FORCE_UNLOAD(libId) YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))
-/* 经 Loader 创建实例并登记实例明细，返回 InstanceInfo */
-#define YOMKPLUGIN_MANAGER_CREATE_INSTANCE(libId, instanceName, instanceFile) \
-    YOMK_REQUEST("/YomkPluginManager/create_instance",                        \
-                 YomkMkPtr(CreateReq, CreateReq{libId, instanceName, instanceFile}))
-/* 销毁指定实例并注销明细，返回 String(ok/msg) */
-#define YOMKPLUGIN_MANAGER_DESTROY_INSTANCE(libId, instanceName) \
-    YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, DestroyReq{libId, instanceName}))
-/* 查询插件列表（libId 为空查全部），返回 StringArray */
-#define YOMKPLUGIN_MANAGER_LIST() YOMK_REQUEST("/YomkPluginManager/list", nullptr)
-#define YOMKPLUGIN_MANAGER_LIST_LIB(libId) YOMK_REQUEST("/YomkPluginManager/list", YomkMkPtr(String, libId))
-/* 查询实例明细（libId 为空查全部），返回 InstanceInfoArray */
-#define YOMKPLUGIN_MANAGER_LIST_INSTANCES() YOMK_REQUEST("/YomkPluginManager/list_instances", nullptr)
-#define YOMKPLUGIN_MANAGER_LIST_INSTANCES_LIB(libId) \
-    YOMK_REQUEST("/YomkPluginManager/list_instances", YomkMkPtr(String, libId))
-
-/* Manager：数据层内省（插件列表 / 单插件元信息 / 全量 dump 含实例明细） */
-#define YOMKPLUGIN_MANAGER_INFO_PLUGINS() YOMK_REQUEST("/YomkPluginManager/plugins", nullptr)
-#define YOMKPLUGIN_MANAGER_INFO_PLUGIN(libId) YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, libId))
-#define YOMKPLUGIN_MANAGER_INFO_ALL() YOMK_REQUEST("/YomkPluginManager/all", nullptr)
-
-/* ------------------------- Builder：编排层 ------------------------- */
-
-/* 按清单构建插件工程（yomk 清单驱动 cmake），返回 StringArray(构建产物 so 路径) */
-#define YOMKPLUGIN_BUILDER_BUILD(workflowPath) \
+/* 按清单构建插件工程（加载所列 so 并创建实例），返回 String(plugins:N instances:N 汇总) */
+#define YOMKPLUGIN_BUILD(workflowPath) \
     YOMK_REQUEST("/YomkPluginSystemBuilder/build", YomkMkPtr(BuildReq, BuildReq{workflowPath}))
 
-/* Builder：编排层内省（全量 dump） */
-#define YOMKPLUGIN_BUILDER_INFO_ALL() YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr)
+/* 强制卸载插件库：先销毁全部实例再卸载，返回 String(ok/msg) */
+#define YOMKPLUGIN_UNLOAD(libId) YOMK_REQUEST("/YomkPluginSystemBuilder/unload", YomkMkPtr(String, libId))
+
+/* 尝试卸载插件库：有存活实例则拒绝，返回 String(ok/msg) */
+#define YOMKPLUGIN_TRY_UNLOAD(libId) YOMK_REQUEST("/YomkPluginSystemBuilder/try_unload", YomkMkPtr(String, libId))
+
+/* 内省：最近一次构建的清单解析结果与状态，返回 String */
+#define YOMKPLUGIN_INFO_ALL() YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr)
+
+/* 内省：插件列表，返回 PluginMetaArray */
+#define YOMKPLUGIN_INFO_PLUGINS() YOMK_REQUEST("/YomkPluginSystemBuilder/plugins", nullptr)
+
+/* 内省：实例明细列表，返回 InstanceInfoArray */
+#define YOMKPLUGIN_INFO_INSTANCES() YOMK_REQUEST("/YomkPluginSystemBuilder/instances", nullptr)
 
 /* ------------------------- 版本 ------------------------- */
 

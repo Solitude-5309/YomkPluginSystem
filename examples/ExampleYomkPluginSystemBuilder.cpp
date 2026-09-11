@@ -49,7 +49,7 @@ static std::string respString(const YomkResponse& r)
 
 static int pluginCount()
 {
-    YomkResponse resp = YOMK_REQUEST("/YomkPluginManager/list", nullptr);
+    YomkResponse resp = YOMKPLUGIN_INFO_PLUGINS();
     if (!isOk(resp))
     {
         return -1;
@@ -60,7 +60,7 @@ static int pluginCount()
 
 static int instanceCount()
 {
-    YomkResponse resp = YOMK_REQUEST("/YomkPluginManager/list_instances", nullptr);
+    YomkResponse resp = YOMKPLUGIN_INFO_INSTANCES();
     if (!isOk(resp))
     {
         return -1;
@@ -71,9 +71,7 @@ static int instanceCount()
 
 static YomkResponse buildWorkflow(const std::string& workflowPath)
 {
-    BuildReq req;
-    req.workflowPath = workflowPath;
-    return YOMK_REQUEST("/YomkPluginSystemBuilder/build", YomkMkPtr(BuildReq, req));
+    return YOMKPLUGIN_BUILD(workflowPath);
 }
 
 static void writeFile(const std::filesystem::path& p, const std::string& content)
@@ -92,15 +90,8 @@ int main(int argc, char* argv[])
     const std::string manifest = WORKFLOW_MANIFEST_PATH;
     check(fs::is_regular_file(manifest), "locate workflow manifest (examples/workflow/manifest.yomk)");
 
-    /* ---------- 用例1：版本（YOMKPLUGIN_VERSION 走 Builder /version
-     * 请求并自动打印） ---------- */
-    {
-        YomkResponse resp = YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
-        check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
-              "Builder /version returns version string");
-        /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
-        YOMKPLUGIN_VERSION();
-    }
+    /* ---------- 用例1：版本（YOMKPLUGIN_VERSION 一键查询并自动打印） ---------- */
+    YOMKPLUGIN_VERSION();
 
     /* ---------- 用例2：清单路径不存在返回 eNo ---------- */
     check(isNo(buildWorkflow("/nonexistent/no_such.yomk")), "build with nonexistent manifest returns eNo");
@@ -116,7 +107,7 @@ int main(int argc, char* argv[])
 
     /* 实例名/插件名与清单条目一致 */
     {
-        YomkResponse resp = YOMK_REQUEST("/YomkPluginManager/list_instances", nullptr);
+        YomkResponse resp = YOMKPLUGIN_INFO_INSTANCES();
         bool foundConn = false, foundWs = false;
         if (isOk(resp))
         {
@@ -140,7 +131,7 @@ int main(int argc, char* argv[])
 
     /* ---------- 用例4：内省 /all 反映最近一次构建 ---------- */
     {
-        std::string dump = respString(YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr));
+        std::string dump = respString(YOMKPLUGIN_INFO_ALL());
         check(dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
                   dump.find("ConnectionService@ConnectionService/lib/"
                             "libConnectionService.so@"
@@ -197,10 +188,8 @@ int main(int argc, char* argv[])
     }
 
     /* ---------- 清理 ---------- */
-    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, std::string("ConnectionService")))),
-          "force_unload ConnectionService");
-    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, std::string("WorkspaceService")))),
-          "force_unload WorkspaceService");
+    check(isOk(YOMKPLUGIN_UNLOAD("ConnectionService")), "force_unload ConnectionService");
+    check(isOk(YOMKPLUGIN_UNLOAD("WorkspaceService")), "force_unload WorkspaceService");
     check(pluginCount() == 0 && instanceCount() == 0, "tables empty after cleanup");
 
     std::cout << "\n========== Test Summary ==========" << std::endl;

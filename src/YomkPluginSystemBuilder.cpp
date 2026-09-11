@@ -42,6 +42,10 @@ int YomkPluginSystemBuilder::init()
     YomkInstallFunc("/build", YomkPluginSystemBuilder::build, BuildReq);
     YomkInstallFunc("/version", YomkPluginSystemBuilder::version);
     YomkInstallFunc("/all", YomkPluginSystemBuilder::infoAll);
+    YomkInstallFunc("/plugins", YomkPluginSystemBuilder::plugins, String);
+    YomkInstallFunc("/instances", YomkPluginSystemBuilder::instances, String);
+    YomkInstallFunc("/unload", YomkPluginSystemBuilder::unload, String);
+    YomkInstallFunc("/try_unload", YomkPluginSystemBuilder::tryUnload, String);
     return 0;
 }
 
@@ -279,6 +283,71 @@ YomkResponse YomkPluginSystemBuilder::infoAll(YomkPkgPtr pkg)
     catch (...)
     {
         return {YomkResponse::eNo, "all exception"};
+    }
+}
+
+/* 代理接口：纯透传入参包给 Manager，参数校验与响应语义归 Manager */
+YomkResponse YomkPluginSystemBuilder::plugins(YomkPkgPtr pkg)
+{
+    try
+    {
+        return YOMK_REQUEST("/YomkPluginManager/list", pkg);
+    }
+    catch (const std::exception& e)
+    {
+        return {YomkResponse::eNo, std::string("plugins exception: ") + e.what()};
+    }
+    catch (...)
+    {
+        return {YomkResponse::eNo, "plugins exception"};
+    }
+}
+
+YomkResponse YomkPluginSystemBuilder::instances(YomkPkgPtr pkg)
+{
+    try
+    {
+        return YOMK_REQUEST("/YomkPluginManager/list_instances", pkg);
+    }
+    catch (const std::exception& e)
+    {
+        return {YomkResponse::eNo, std::string("instances exception: ") + e.what()};
+    }
+    catch (...)
+    {
+        return {YomkResponse::eNo, "instances exception"};
+    }
+}
+
+YomkResponse YomkPluginSystemBuilder::unload(YomkPkgPtr pkg)
+{
+    try
+    {
+        return YOMK_REQUEST("/YomkPluginManager/force_unload", pkg);
+    }
+    catch (const std::exception& e)
+    {
+        return {YomkResponse::eNo, std::string("unload exception: ") + e.what()};
+    }
+    catch (...)
+    {
+        return {YomkResponse::eNo, "unload exception"};
+    }
+}
+
+YomkResponse YomkPluginSystemBuilder::tryUnload(YomkPkgPtr pkg)
+{
+    try
+    {
+        return YOMK_REQUEST("/YomkPluginManager/try_unload", pkg);
+    }
+    catch (const std::exception& e)
+    {
+        return {YomkResponse::eNo, std::string("try_unload exception: ") + e.what()};
+    }
+    catch (...)
+    {
+        return {YomkResponse::eNo, "try_unload exception"};
     }
 }
 

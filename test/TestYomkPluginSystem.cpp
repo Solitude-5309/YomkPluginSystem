@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
         check(instName1 != instName2 && !instName1.empty(), "instance names unique within plugin");
         check(instanceCount() == 2, "/list_instances count == 2");
 
-        std::string dump = respString(YOMKPLUGIN_MANAGER_INFO_ALL());
+        std::string dump = respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr));
         check(dump.find("userData:off") != std::string::npos, "userData defaults to empty (userData:off)");
     }
 
@@ -246,8 +246,9 @@ int main(int argc, char* argv[])
         check(hasLoadType && hasUnloadType, "YOMK_SERVER_INFO_FUNCTIONS shows type marks");
 
         /* 空态内省：计数归零 */
-        check(respString(YOMKPLUGIN_LOADER_INFO_ALL()).find("libs:0") == 0, "Loader /all reports libs:0 after unload");
-        check(respString(YOMKPLUGIN_MANAGER_INFO_ALL()).find("plugins:0 instances:0") == 0,
+        check(respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:0") == 0,
+              "Loader /all reports libs:0 after unload");
+        check(respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr)).find("plugins:0 instances:0") == 0,
               "Manager /all reports plugins:0 instances:0 after unload");
 
         /* 加载态内省：列表/单实体/全量 dump */
@@ -259,7 +260,7 @@ int main(int argc, char* argv[])
         check(isOk(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(CreateReq, req))),
               "create instance for introspection");
 
-        resp = YOMKPLUGIN_LOADER_INFO_LIBS();
+        resp = YOMK_REQUEST("/YomkPluginLoader/libs", nullptr);
         bool loaderLibsOk = false;
         if (isOk(resp))
         {
@@ -267,11 +268,13 @@ int main(int argc, char* argv[])
             loaderLibsOk = !arr->d.empty() && arr->d[0] == libId;
         }
         check(loaderLibsOk, "Loader INFO_LIBS lists TestPlugin");
-        check(respString(YOMKPLUGIN_LOADER_INFO_LIB(libId)).find("abi:1 alive:1") != std::string::npos,
+        check(respString(YOMK_REQUEST("/YomkPluginLoader/lib", YomkMkPtr(String, libId))).find("abi:1 alive:1") !=
+                  std::string::npos,
               "Loader INFO_LIB shows abi and alive count");
-        check(respString(YOMKPLUGIN_LOADER_INFO_ALL()).find("libs:1") == 0, "Loader INFO_ALL header libs:1");
+        check(respString(YOMK_REQUEST("/YomkPluginLoader/all", nullptr)).find("libs:1") == 0,
+              "Loader INFO_ALL header libs:1");
 
-        resp = YOMKPLUGIN_MANAGER_INFO_PLUGINS();
+        resp = YOMK_REQUEST("/YomkPluginManager/plugins", nullptr);
         bool mgrPluginsOk = false;
         if (isOk(resp))
         {
@@ -279,13 +282,14 @@ int main(int argc, char* argv[])
             mgrPluginsOk = !arr->d.empty() && arr->d[0] == libId;
         }
         check(mgrPluginsOk, "Manager INFO_PLUGINS lists TestPlugin");
-        std::string line = respString(YOMKPLUGIN_MANAGER_INFO_PLUGIN(libId));
+        std::string line = respString(YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, libId)));
         check(line.find("[demo]") != std::string::npos && line.find("instances:1") != std::string::npos,
               "Manager INFO_PLUGIN shows type and instance count");
-        std::string dump = respString(YOMKPLUGIN_MANAGER_INFO_ALL());
+        std::string dump = respString(YOMK_REQUEST("/YomkPluginManager/all", nullptr));
         check(dump.find("plugins:1 instances:1") == 0 && dump.find("[demo]") != std::string::npos,
               "Manager INFO_ALL header and instance detail");
-        check(isNo(YOMKPLUGIN_MANAGER_INFO_PLUGIN("NoSuchPlugin")), "INFO_PLUGIN unknown returns eNo");
+        check(isNo(YOMK_REQUEST("/YomkPluginManager/plugin", YomkMkPtr(String, std::string("NoSuchPlugin")))),
+              "INFO_PLUGIN unknown returns eNo");
 
         /* 清理 */
         check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),

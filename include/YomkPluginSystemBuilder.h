@@ -42,6 +42,14 @@ private:
     /* 内省接口 */
     /* -> String 最近一次构建的清单解析结果与状态 */
     YomkResponse infoAll(YomkPkgPtr pkg);
+    /* 代理 Manager /list：[String libId] -> PluginMetaArray 插件列表 */
+    YomkResponse plugins(YomkPkgPtr pkg);
+    /* 代理 Manager /list_instances：[String libId] -> InstanceInfoArray 实例明细 */
+    YomkResponse instances(YomkPkgPtr pkg);
+    /* 代理 Manager /force_unload：String libId -> ok 先销毁全部实例再卸载 */
+    YomkResponse unload(YomkPkgPtr pkg);
+    /* 代理 Manager /try_unload：String libId -> ok 有存活实例拒绝 */
+    YomkResponse tryUnload(YomkPkgPtr pkg);
 
     /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
      * 按 @ 切分校验三段，路径段拒绝绝对路径 */
