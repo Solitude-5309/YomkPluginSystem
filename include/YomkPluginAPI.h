@@ -73,7 +73,7 @@
 /* 尝试卸载插件库：有存活实例则拒绝，返回 String(ok/msg) */
 #define YOMKPLUGIN_TRY_UNLOAD(libId) YOMK_REQUEST("/YomkPluginSystemBuilder/try_unload", YomkMkPtr(String, libId))
 
-/* 内省：最近一次构建的清单解析结果与状态，返回 String */
+/* 内省：三段聚合（== build == 构建状态 + == plugins == 插件/实例 + == libs == 已加载库），返回 String */
 #define YOMKPLUGIN_INFO_ALL() YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr)
 
 /* 内省：插件列表，返回 PluginMetaArray */

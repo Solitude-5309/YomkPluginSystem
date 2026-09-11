@@ -129,17 +129,22 @@ int main(int argc, char* argv[])
         check(foundConn && foundWs, "instances named after manifest entries");
     }
 
-    /* ---------- 用例4：内省 /all 反映最近一次构建 ---------- */
+    /* ---------- 用例4：内省 /all 聚合（构建 + 插件/实例 + 已加载库） ---------- */
     {
         std::string dump = respString(YOMKPLUGIN_INFO_ALL());
-        check(dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
+        check(dump.find("== build ==") != std::string::npos &&
+                  dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
                   dump.find("ConnectionService@ConnectionService/lib/"
                             "libConnectionService.so@"
                             "ConnectionService/instances/ConnectionService.txt") != std::string::npos &&
                   dump.find("WorkspaceService@WorkspaceService/lib/"
                             "libWorkspaceService.so@"
-                            "WorkspaceService/instances/WorkspaceService.txt") != std::string::npos,
-              "Builder /all shows last build entries");
+                            "WorkspaceService/instances/WorkspaceService.txt") != std::string::npos &&
+                  dump.find("== plugins ==") != std::string::npos &&
+                  dump.find("ConnectionService [workflow]") != std::string::npos &&
+                  dump.find("WorkspaceService [workflow]") != std::string::npos &&
+                  dump.find("== libs ==") != std::string::npos && dump.find("libs:2") != std::string::npos,
+              "Builder /all aggregates build/plugins/libs");
     }
 
     /* ---------- 用例5：重复构建（插件幂等跳过，重名实例按现有语义报错） ---------- */

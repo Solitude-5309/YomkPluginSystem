@@ -40,7 +40,8 @@ private:
     /* 无 -> String 扩展版本号 */
     YomkResponse version(YomkPkgPtr pkg);
     /* 内省接口 */
-    /* -> String 最近一次构建的清单解析结果与状态 */
+    /* -> String 三段聚合：== build == 最近构建状态 + == plugins == 插件/实例
+     * + == libs == 已加载库（后两段转发 Manager/Loader /all，段失败降级） */
     YomkResponse infoAll(YomkPkgPtr pkg);
     /* 代理 Manager /list：[String libId] -> PluginMetaArray 插件列表 */
     YomkResponse plugins(YomkPkgPtr pkg);

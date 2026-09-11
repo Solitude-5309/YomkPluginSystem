@@ -264,16 +264,36 @@ YomkResponse YomkPluginSystemBuilder::infoAll(YomkPkgPtr pkg)
 {
     try
     {
-        std::string dump;
+        /* 段1：最近一次构建的清单解析结果与状态 */
+        std::string dump = "== build ==";
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            dump = "manifest:" + (m_lastManifest.empty() ? "-" : m_lastManifest) +
-                   " result:" + (m_lastResult.empty() ? "-" : m_lastResult);
+            dump += "\nmanifest:" + (m_lastManifest.empty() ? "-" : m_lastManifest) +
+                    " result:" + (m_lastResult.empty() ? "-" : m_lastResult);
             for (const auto& line : m_lastEntries)
             {
                 dump += "\n" + line;
             }
         }
+
+        /* 段2/3：转发 Manager/Loader 全量 dump；段失败降级为 [segment error] 行，整体仍 eOk */
+        auto appendSegment = [&dump](const char* title, const char* url)
+        {
+            dump += std::string("\n\n== ") + title + " ==\n";
+            YomkResponse resp = YOMK_REQUEST(url, nullptr);
+            if (resp.m_status == YomkResponse::eOk && resp.m_data && resp.m_data->name() == "String")
+            {
+                auto p = std::dynamic_pointer_cast<yomk::String_>(resp.m_data);
+                if (p)
+                {
+                    dump += p->d;
+                    return;
+                }
+            }
+            dump += std::string("[segment error] ") + title + ": " + resp.m_msg;
+        };
+        appendSegment("plugins", "/YomkPluginManager/all");
+        appendSegment("libs", "/YomkPluginLoader/all");
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, dump));
     }
     catch (const std::exception& e)
