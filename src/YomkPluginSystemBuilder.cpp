@@ -5,6 +5,9 @@
 #include <map>
 #include <set>
 
+#include "YomkPluginLoader.h"
+#include "YomkPluginManager.h"
+
 /* 去除首尾空白 */
 static std::string trim(const std::string& s)
 {
@@ -24,10 +27,29 @@ YomkPluginSystemBuilder::YomkPluginSystemBuilder(YomkServer* server) : YomkServi
 
 int YomkPluginSystemBuilder::init()
 {
+    /* 内部机制/数据服务由门面接管生命周期：先注册 Loader，再注册 Manager */
+    if (YOMK_NEW_SERVICE(YomkPluginLoader) != 0)
+    {
+        YOMK_ERROR_TAG("YomkPluginSystemBuilder", "init: register YomkPluginLoader failed");
+        return -1;
+    }
+    if (YOMK_NEW_SERVICE(YomkPluginManager) != 0)
+    {
+        YOMK_ERROR_TAG("YomkPluginSystemBuilder", "init: register YomkPluginManager failed");
+        return -1;
+    }
+
     YomkInstallFunc("/build", YomkPluginSystemBuilder::build, BuildReq);
     YomkInstallFunc("/version", YomkPluginSystemBuilder::version);
     YomkInstallFunc("/all", YomkPluginSystemBuilder::infoAll);
     return 0;
+}
+
+void YomkPluginSystemBuilder::deinit()
+{
+    /* 逆序注销 init 注册的内部服务 */
+    YOMK_DEL_SERVICE("/YomkPluginManager");
+    YOMK_DEL_SERVICE("/YomkPluginLoader");
 }
 
 YomkResponse YomkPluginSystemBuilder::parseManifest(const std::string& workflowPath, std::string& workflowDir,

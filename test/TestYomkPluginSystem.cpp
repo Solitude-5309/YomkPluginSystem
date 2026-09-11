@@ -82,8 +82,7 @@ static std::string findPluginPath()
 int main(int argc, char* argv[])
 {
     YOMK_INIT();
-    YOMK_NEW_SERVICE(YomkPluginLoader);
-    YOMK_NEW_SERVICE(YomkPluginManager);
+    /* 白盒测试：Loader/Manager 由 YomkPluginSystemBuilder::init 内部注册，此处仅注册门面服务 */
     YOMK_NEW_SERVICE(YomkPluginSystemBuilder);
 
     const std::string libId = "TestPlugin";

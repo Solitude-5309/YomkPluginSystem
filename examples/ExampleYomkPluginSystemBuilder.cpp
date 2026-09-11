@@ -85,8 +85,7 @@ static void writeFile(const std::filesystem::path& p, const std::string& content
 int main(int argc, char* argv[])
 {
     YOMK_INIT();
-    YOMK_NEW_SERVICE(YomkPluginLoader);
-    YOMK_NEW_SERVICE(YomkPluginManager);
+    /* Loader/Manager 由 YomkPluginSystemBuilder::init 内部注册，用户仅注册门面服务 */
     YOMK_NEW_SERVICE(YomkPluginSystemBuilder);
 
     namespace fs = std::filesystem;
