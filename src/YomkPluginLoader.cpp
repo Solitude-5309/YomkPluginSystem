@@ -1,10 +1,10 @@
 #include "YomkPluginLoader.h"
 
-#include <algorithm>
 #include <dlfcn.h>
 
-YomkPluginLoader::YomkPluginLoader(YomkServer *server)
-    : YomkService(server)
+#include <algorithm>
+
+YomkPluginLoader::YomkPluginLoader(YomkServer* server) : YomkService(server)
 {
     name("/YomkPluginLoader");
 }
@@ -15,8 +15,7 @@ int YomkPluginLoader::init()
     YomkInstallFunc("/unloadLib", YomkPluginLoader::unloadLib, String);
     YomkInstallFunc("/meta", YomkPluginLoader::meta, String);
     YomkInstallFunc("/create", YomkPluginLoader::create, CreateReq);
-    YomkInstallFunc("/delete", YomkPluginLoader::deleteInstance,
-                    PluginInstance);
+    YomkInstallFunc("/delete", YomkPluginLoader::deleteInstance, PluginInstance);
     YomkInstallFunc("/libs", YomkPluginLoader::infoLibs);
     YomkInstallFunc("/lib", YomkPluginLoader::infoLib, String);
     YomkInstallFunc("/all", YomkPluginLoader::infoAll);
@@ -28,7 +27,7 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
     try
     {
         YomkUnPackPkg(pkg, PluginPath, data);
-        void *handle = nullptr;
+        void* handle = nullptr;
         YomkPluginMetaFunc metaFn = nullptr;
         YomkPluginCreateInstanceFunc createFn = nullptr;
         YomkPluginDeleteInstanceFunc deleteFn = nullptr;
@@ -40,17 +39,15 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
             return {YomkResponse::eNo, std::string("dlopen failed: ") + dlerror()};
         }
         metaFn = reinterpret_cast<YomkPluginMetaFunc>(dlsym(handle, YOMKPLUGIN_SYMBOL_META));
-        createFn = reinterpret_cast<YomkPluginCreateInstanceFunc>(
-            dlsym(handle, YOMKPLUGIN_SYMBOL_CREATE_INSTANCE));
-        deleteFn = reinterpret_cast<YomkPluginDeleteInstanceFunc>(
-            dlsym(handle, YOMKPLUGIN_SYMBOL_DELETE_INSTANCE));
+        createFn = reinterpret_cast<YomkPluginCreateInstanceFunc>(dlsym(handle, YOMKPLUGIN_SYMBOL_CREATE_INSTANCE));
+        deleteFn = reinterpret_cast<YomkPluginDeleteInstanceFunc>(dlsym(handle, YOMKPLUGIN_SYMBOL_DELETE_INSTANCE));
         if (!metaFn || !createFn || !deleteFn)
         {
             dlclose(handle);
             return {YomkResponse::eNo, "missing plugin export symbols"};
         }
 
-        const YomkPluginMeta *meta = metaFn();
+        const YomkPluginMeta* meta = metaFn();
         if (!meta || !meta->name || !*meta->name)
         {
             dlclose(handle);
@@ -59,9 +56,8 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         if (meta->abi_version != YOMKPLUGIN_ABI_VERSION)
         {
             dlclose(handle);
-            return {YomkResponse::eNo,
-                    "abi version mismatch: plugin " + std::to_string(meta->abi_version) +
-                        ", host " + std::to_string(YOMKPLUGIN_ABI_VERSION)};
+            return {YomkResponse::eNo, "abi version mismatch: plugin " + std::to_string(meta->abi_version) + ", host " +
+                                           std::to_string(YOMKPLUGIN_ABI_VERSION)};
         }
         libId = meta->name;
 
@@ -79,7 +75,7 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         m_libs[libId] = lib;
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, libId));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("loadLib exception: ") + e.what()};
     }
@@ -95,7 +91,7 @@ YomkResponse YomkPluginLoader::unloadLib(YomkPkgPtr pkg)
     {
         YomkUnPackPkg(pkg, String, data);
         const std::string libId = data->d;
-        void *handle = nullptr;
+        void* handle = nullptr;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             auto it = m_libs.find(libId);
@@ -117,7 +113,7 @@ YomkResponse YomkPluginLoader::unloadLib(YomkPkgPtr pkg)
         YOMK_INFO_TAG("YomkPluginLoader", "unloadLib: ", libId);
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("unloadLib exception: ") + e.what()};
     }
@@ -138,7 +134,7 @@ YomkResponse YomkPluginLoader::meta(YomkPkgPtr pkg)
         {
             return {YomkResponse::eNo, "lib not loaded: " + data->d};
         }
-        const YomkPluginMeta *meta = it->second.metaFn();
+        const YomkPluginMeta* meta = it->second.metaFn();
         if (!meta)
         {
             return {YomkResponse::eNo, "invalid plugin meta"};
@@ -152,7 +148,7 @@ YomkResponse YomkPluginLoader::meta(YomkPkgPtr pkg)
         out.description = meta->description ? meta->description : "";
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginMeta, out));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("meta exception: ") + e.what()};
     }
@@ -181,7 +177,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
         }
 
         /* 锁外调用插件工厂；shared_ptr 自定义 deleter 绑定该库的 delete_instance */
-        YomkPluginInterface *raw = createFn(req->d.instanceName.c_str(), req->d.instanceFile.c_str());
+        YomkPluginInterface* raw = createFn(req->d.instanceName.c_str(), req->d.instanceFile.c_str());
         if (!raw)
         {
             return {YomkResponse::eNo, "create instance failed: " + req->d.libId};
@@ -192,7 +188,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
         m_alive[req->d.libId].push_back(inst);
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginInstance, inst));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("create exception: ") + e.what()};
     }
@@ -209,13 +205,13 @@ YomkResponse YomkPluginLoader::deleteInstance(YomkPkgPtr pkg)
         YomkUnPackPkg(pkg, PluginInstance, data);
         /* shared_ptr 拷贝随响应包销毁时 reset，自动触发 delete_instance */
         std::lock_guard<std::mutex> lock(m_mutex);
-        for (auto &kv : m_alive)
+        for (auto& kv : m_alive)
         {
             purgeDead(kv.first);
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("delete exception: ") + e.what()};
     }
@@ -232,14 +228,14 @@ YomkResponse YomkPluginLoader::infoLibs(YomkPkgPtr pkg)
         std::vector<std::string> ids;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            for (const auto &kv : m_libs)
+            for (const auto& kv : m_libs)
             {
                 ids.push_back(kv.first);
             }
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(StringArray, ids));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("libs exception: ") + e.what()};
     }
@@ -261,7 +257,7 @@ YomkResponse YomkPluginLoader::infoLib(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, libInfoLine(data->d)));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("lib exception: ") + e.what()};
     }
@@ -279,14 +275,14 @@ YomkResponse YomkPluginLoader::infoAll(YomkPkgPtr pkg)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             dump = "libs:" + std::to_string(m_libs.size());
-            for (const auto &kv : m_libs)
+            for (const auto& kv : m_libs)
             {
                 dump += "\n" + libInfoLine(kv.first);
             }
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, dump));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("all exception: ") + e.what()};
     }
@@ -296,34 +292,33 @@ YomkResponse YomkPluginLoader::infoAll(YomkPkgPtr pkg)
     }
 }
 
-void YomkPluginLoader::purgeDead(const std::string &libId)
+void YomkPluginLoader::purgeDead(const std::string& libId)
 {
     auto it = m_alive.find(libId);
     if (it == m_alive.end())
     {
         return;
     }
-    auto &vec = it->second;
-    vec.erase(std::remove_if(vec.begin(), vec.end(),
-                             [](const std::weak_ptr<YomkPluginInterface> &w)
-                             { return w.expired(); }),
-              vec.end());
+    auto& vec = it->second;
+    vec.erase(
+        std::remove_if(vec.begin(), vec.end(), [](const std::weak_ptr<YomkPluginInterface>& w) { return w.expired(); }),
+        vec.end());
 }
 
-int YomkPluginLoader::aliveCount(const std::string &libId)
+int YomkPluginLoader::aliveCount(const std::string& libId)
 {
     auto it = m_alive.find(libId);
     return it == m_alive.end() ? 0 : static_cast<int>(it->second.size());
 }
 
-std::string YomkPluginLoader::libInfoLine(const std::string &libId)
+std::string YomkPluginLoader::libInfoLine(const std::string& libId)
 {
     purgeDead(libId);
     int abi = 0;
     auto it = m_libs.find(libId);
     if (it != m_libs.end() && it->second.metaFn)
     {
-        const YomkPluginMeta *meta = it->second.metaFn();
+        const YomkPluginMeta* meta = it->second.metaFn();
         if (meta)
         {
             abi = meta->abi_version;

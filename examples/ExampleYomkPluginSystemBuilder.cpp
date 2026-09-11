@@ -11,7 +11,7 @@ using namespace yomk;
 static int g_pass = 0;
 static int g_fail = 0;
 
-static void check(bool ok, const std::string &desc)
+static void check(bool ok, const std::string& desc)
 {
     if (ok)
     {
@@ -25,10 +25,16 @@ static void check(bool ok, const std::string &desc)
     }
 }
 
-static bool isOk(const YomkResponse &r) { return r.m_status == YomkResponse::eOk; }
-static bool isNo(const YomkResponse &r) { return r.m_status == YomkResponse::eNo; }
+static bool isOk(const YomkResponse& r)
+{
+    return r.m_status == YomkResponse::eOk;
+}
+static bool isNo(const YomkResponse& r)
+{
+    return r.m_status == YomkResponse::eNo;
+}
 
-static std::string respString(const YomkResponse &r)
+static std::string respString(const YomkResponse& r)
 {
     if (r.m_data && r.m_data->name() == "String")
     {
@@ -63,20 +69,20 @@ static int instanceCount()
     return static_cast<int>(arr->d.size());
 }
 
-static YomkResponse buildWorkflow(const std::string &workflowPath)
+static YomkResponse buildWorkflow(const std::string& workflowPath)
 {
     BuildReq req;
     req.workflowPath = workflowPath;
     return YOMK_REQUEST("/YomkPluginSystemBuilder/build", YomkMkPtr(BuildReq, req));
 }
 
-static void writeFile(const std::filesystem::path &p, const std::string &content)
+static void writeFile(const std::filesystem::path& p, const std::string& content)
 {
     std::ofstream f(p);
     f << content;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     YOMK_INIT();
     YOMK_NEW_SERVICE(YomkPluginLoader);
@@ -85,17 +91,16 @@ int main(int argc, char *argv[])
 
     namespace fs = std::filesystem;
     const std::string manifest = WORKFLOW_MANIFEST_PATH;
-    check(fs::is_regular_file(manifest),
-          "locate workflow manifest (examples/workflow/manifest.yomk)");
+    check(fs::is_regular_file(manifest), "locate workflow manifest (examples/workflow/manifest.yomk)");
 
     /* ---------- 用例1：版本（YOMKPLUGIN_VERSION 走 Builder /version
      * 请求并自动打印） ---------- */
     {
-      YomkResponse resp =
-          YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
-      check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
-            "Builder /version returns version string");
-      YOMKPLUGIN_VERSION(); /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+        YomkResponse resp = YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
+        check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
+              "Builder /version returns version string");
+        /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+        YOMKPLUGIN_VERSION();
     }
 
     /* ---------- 用例2：清单路径不存在返回 eNo ---------- */
@@ -105,8 +110,7 @@ int main(int argc, char *argv[])
      */
     {
         YomkResponse resp = buildWorkflow(manifest);
-        check(isOk(resp) && respString(resp) == "plugins:2 instances:2",
-              "build workflow ok (plugins:2 instances:2)");
+        check(isOk(resp) && respString(resp) == "plugins:2 instances:2", "build workflow ok (plugins:2 instances:2)");
     }
     check(pluginCount() == 2, "plugin count == 2");
     check(instanceCount() == 2, "instance count == 2");
@@ -118,7 +122,7 @@ int main(int argc, char *argv[])
         if (isOk(resp))
         {
             YomkUnPackPkg(resp.m_data, InstanceInfoArray, arr);
-            for (const auto &i : arr->d)
+            for (const auto& i : arr->d)
             {
                 if (i.libId == "ConnectionService" && i.instanceName == "ConnectionService" &&
                     i.instanceType == "workflow")
@@ -138,18 +142,14 @@ int main(int argc, char *argv[])
     /* ---------- 用例4：内省 /all 反映最近一次构建 ---------- */
     {
         std::string dump = respString(YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr));
-        check(
-            dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
-                dump.find(
-                    "ConnectionService@ConnectionService/lib/"
-                    "libConnectionService.so@"
-                    "ConnectionService/instances/ConnectionService.txt") !=
-                    std::string::npos &&
-                dump.find("WorkspaceService@WorkspaceService/lib/"
-                          "libWorkspaceService.so@"
-                          "WorkspaceService/instances/WorkspaceService.txt") !=
-                    std::string::npos,
-            "Builder /all shows last build entries");
+        check(dump.find("result:ok plugins:2 instances:2") != std::string::npos &&
+                  dump.find("ConnectionService@ConnectionService/lib/"
+                            "libConnectionService.so@"
+                            "ConnectionService/instances/ConnectionService.txt") != std::string::npos &&
+                  dump.find("WorkspaceService@WorkspaceService/lib/"
+                            "libWorkspaceService.so@"
+                            "WorkspaceService/instances/WorkspaceService.txt") != std::string::npos,
+              "Builder /all shows last build entries");
     }
 
     /* ---------- 用例5：重复构建（插件幂等跳过，重名实例按现有语义报错） ---------- */
@@ -167,22 +167,17 @@ int main(int argc, char *argv[])
         writeFile(tmp / "moduleA" / "instances" / "a.txt", "name: a\n");
 
         /* 缺失首行格式标识（条目本身合法，仅标识缺失） */
-        writeFile(tmp / "case_marker.yomk",
-                  "inst-a@moduleA/libmoduleA.so@moduleA/instances/a.txt\n");
-        check(isNo(buildWorkflow((tmp / "case_marker.yomk").string())),
-              "manifest without format marker returns eNo");
+        writeFile(tmp / "case_marker.yomk", "inst-a@moduleA/libmoduleA.so@moduleA/instances/a.txt\n");
+        check(isNo(buildWorkflow((tmp / "case_marker.yomk").string())), "manifest without format marker returns eNo");
 
         /* 段数不足 */
-        writeFile(tmp / "case_segment.yomk",
-                  "#! yomk_plugin_system\nonly.two\n");
+        writeFile(tmp / "case_segment.yomk", "#! yomk_plugin_system\nonly.two\n");
         check(isNo(buildWorkflow((tmp / "case_segment.yomk").string())),
               "manifest with wrong segment count returns eNo");
 
         /* 绝对路径拒绝 */
-        writeFile(tmp / "case_abs.yomk",
-                  "#! yomk_plugin_system\ninst-a@/abs/lib.so@a.txt\n");
-        check(isNo(buildWorkflow((tmp / "case_abs.yomk").string())),
-              "manifest with absolute lib path returns eNo");
+        writeFile(tmp / "case_abs.yomk", "#! yomk_plugin_system\ninst-a@/abs/lib.so@a.txt\n");
+        check(isNo(buildWorkflow((tmp / "case_abs.yomk").string())), "manifest with absolute lib path returns eNo");
 
         /* 实例文件缺失 */
         writeFile(tmp / "case_instance.yomk",
@@ -197,18 +192,15 @@ int main(int argc, char *argv[])
                   "#! "
                   "yomk_plugin_system\ninst-a@moduleA/libmoduleA.so@moduleA/"
                   "instances/a.txt\n");
-        check(isNo(buildWorkflow((tmp / "case_so.yomk").string())),
-              "manifest with missing plugin lib returns eNo");
+        check(isNo(buildWorkflow((tmp / "case_so.yomk").string())), "manifest with missing plugin lib returns eNo");
 
         fs::remove_all(tmp);
     }
 
     /* ---------- 清理 ---------- */
-    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload",
-                            YomkMkPtr(String, std::string("ConnectionService")))),
+    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, std::string("ConnectionService")))),
           "force_unload ConnectionService");
-    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload",
-                            YomkMkPtr(String, std::string("WorkspaceService")))),
+    check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, std::string("WorkspaceService")))),
           "force_unload WorkspaceService");
     check(pluginCount() == 0 && instanceCount() == 0, "tables empty after cleanup");
 

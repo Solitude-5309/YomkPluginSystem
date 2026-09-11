@@ -1,9 +1,9 @@
 #pragma once
-#include "YomkPluginMsgs.h"
-
 #include <map>
 #include <memory>
 #include <mutex>
+
+#include "YomkPluginMsgs.h"
 
 using namespace yomk;
 
@@ -15,7 +15,7 @@ using namespace yomk;
 class YomkPluginManager : public YomkService
 {
 public:
-    YomkPluginManager(YomkServer *server);
+    YomkPluginManager(YomkServer* server);
     virtual ~YomkPluginManager() {}
     virtual int init() override;
 
@@ -28,26 +28,37 @@ private:
         std::string version;
         std::string author;
         std::string description;
-        std::string libPath; /* so 文件路径 */
+        /* so 文件路径 */
+        std::string libPath;
     };
 
     /* 请求接口 */
-    YomkResponse load(YomkPkgPtr pkg);            /* PluginPath -> String libId */
-    YomkResponse tryUnload(YomkPkgPtr pkg);       /* String libId -> ok（有存活实例失败） */
-    YomkResponse forceUnload(YomkPkgPtr pkg);     /* String libId -> ok（直接删所有实例） */
-    YomkResponse createInstance(YomkPkgPtr pkg);  /* CreateReq -> InstanceInfo */
-    YomkResponse destroyInstance(YomkPkgPtr pkg); /* DestroyReq -> ok */
-    YomkResponse list(YomkPkgPtr pkg);            /* [String libId] -> PluginMetaArray */
-    YomkResponse listInstances(YomkPkgPtr pkg);   /* [String libId] -> InstanceInfoArray */
+    /* PluginPath -> String libId */
+    YomkResponse load(YomkPkgPtr pkg);
+    /* String libId -> ok（有存活实例失败） */
+    YomkResponse tryUnload(YomkPkgPtr pkg);
+    /* String libId -> ok（直接删所有实例） */
+    YomkResponse forceUnload(YomkPkgPtr pkg);
+    /* CreateReq -> InstanceInfo */
+    YomkResponse createInstance(YomkPkgPtr pkg);
+    /* DestroyReq -> ok */
+    YomkResponse destroyInstance(YomkPkgPtr pkg);
+    /* [String libId] -> PluginMetaArray */
+    YomkResponse list(YomkPkgPtr pkg);
+    /* [String libId] -> InstanceInfoArray */
+    YomkResponse listInstances(YomkPkgPtr pkg);
     /* 内省接口 */
-    YomkResponse infoPlugins(YomkPkgPtr pkg); /* -> StringArray */
-    YomkResponse infoPlugin(YomkPkgPtr pkg);  /* String libId -> String 元信息行 */
-    YomkResponse infoAll(YomkPkgPtr pkg);     /* -> String 全量 dump */
+    /* -> StringArray */
+    YomkResponse infoPlugins(YomkPkgPtr pkg);
+    /* String libId -> String 元信息行 */
+    YomkResponse infoPlugin(YomkPkgPtr pkg);
+    /* -> String 全量 dump */
+    YomkResponse infoAll(YomkPkgPtr pkg);
 
     /* 内省行格式化（调用方已持锁） */
-    std::string pluginInfoLine(const std::string &libId, const PluginRecord &rec) const;
-    std::string instanceInfoLine(const std::string &instanceName,
-                                 const std::shared_ptr<YomkPluginInterface> &inst) const;
+    std::string pluginInfoLine(const std::string& libId, const PluginRecord& rec) const;
+    std::string instanceInfoLine(const std::string& instanceName,
+                                 const std::shared_ptr<YomkPluginInterface>& inst) const;
 
     std::mutex m_mutex;
     /* 插件表：扁平 map，libId = meta.name */

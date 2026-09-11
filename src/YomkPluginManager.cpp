@@ -1,7 +1,6 @@
 #include "YomkPluginManager.h"
 
-YomkPluginManager::YomkPluginManager(YomkServer *server)
-    : YomkService(server)
+YomkPluginManager::YomkPluginManager(YomkServer* server) : YomkService(server)
 {
     name("/YomkPluginManager");
 }
@@ -14,8 +13,7 @@ int YomkPluginManager::init()
     YomkInstallFunc("/create_instance", YomkPluginManager::createInstance, CreateReq);
     YomkInstallFunc("/destroy_instance", YomkPluginManager::destroyInstance, DestroyReq);
     YomkInstallFunc("/list", YomkPluginManager::list, String);
-    YomkInstallFunc("/list_instances", YomkPluginManager::listInstances,
-                    String);
+    YomkInstallFunc("/list_instances", YomkPluginManager::listInstances, String);
     YomkInstallFunc("/plugins", YomkPluginManager::infoPlugins);
     YomkInstallFunc("/plugin", YomkPluginManager::infoPlugin, String);
     YomkInstallFunc("/all", YomkPluginManager::infoAll);
@@ -61,10 +59,11 @@ YomkResponse YomkPluginManager::load(YomkPkgPtr pkg)
             return {YomkResponse::eNo, "plugin already loaded: " + libId};
         }
         m_plugins[libId] = rec;
-        m_instances[libId]; /* 保证实例组存在，不变量：实例表外层 libId 必在插件表中 */
+        /* 保证实例组存在，不变量：实例表外层 libId 必在插件表中 */
+        m_instances[libId];
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, libId));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("load exception: ") + e.what()};
     }
@@ -99,7 +98,7 @@ YomkResponse YomkPluginManager::tryUnload(YomkPkgPtr pkg)
         YOMK_INFO_TAG("YomkPluginManager", "try_unload: ", libId, " ok");
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("try_unload exception: ") + e.what()};
     }
@@ -142,7 +141,7 @@ YomkResponse YomkPluginManager::forceUnload(YomkPkgPtr pkg)
         YOMK_INFO_TAG("YomkPluginManager", "force_unload: ", libId, " ok");
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("force_unload exception: ") + e.what()};
     }
@@ -200,7 +199,7 @@ YomkResponse YomkPluginManager::createInstance(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, req->d.instanceName));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("create_instance exception: ") + e.what()};
     }
@@ -237,7 +236,7 @@ YomkResponse YomkPluginManager::destroyInstance(YomkPkgPtr pkg)
         inst.reset();
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("destroy_instance exception: ") + e.what()};
     }
@@ -264,7 +263,7 @@ YomkResponse YomkPluginManager::list(YomkPkgPtr pkg)
 
         std::vector<PluginMeta> metas;
         std::lock_guard<std::mutex> lock(m_mutex);
-        for (const auto &kv : m_plugins)
+        for (const auto& kv : m_plugins)
         {
             if (!filter.empty() && kv.first != filter)
             {
@@ -286,7 +285,7 @@ YomkResponse YomkPluginManager::list(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginMetaArray, metas));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("list exception: ") + e.what()};
     }
@@ -322,7 +321,7 @@ YomkResponse YomkPluginManager::listInstances(YomkPkgPtr pkg)
             auto it = m_instances.find(filter);
             if (it != m_instances.end())
             {
-                for (const auto &instKv : it->second)
+                for (const auto& instKv : it->second)
                 {
                     InstanceInfo info;
                     info.libId = filter;
@@ -335,9 +334,9 @@ YomkResponse YomkPluginManager::listInstances(YomkPkgPtr pkg)
         }
         else
         {
-            for (const auto &kv : m_instances)
+            for (const auto& kv : m_instances)
             {
-                for (const auto &instKv : kv.second)
+                for (const auto& instKv : kv.second)
                 {
                     InstanceInfo info;
                     info.libId = kv.first;
@@ -350,7 +349,7 @@ YomkResponse YomkPluginManager::listInstances(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(InstanceInfoArray, infos));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("list_instances exception: ") + e.what()};
     }
@@ -367,14 +366,14 @@ YomkResponse YomkPluginManager::infoPlugins(YomkPkgPtr pkg)
         std::vector<std::string> ids;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            for (const auto &kv : m_plugins)
+            for (const auto& kv : m_plugins)
             {
                 ids.push_back(kv.first);
             }
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(StringArray, ids));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("plugins exception: ") + e.what()};
     }
@@ -397,7 +396,7 @@ YomkResponse YomkPluginManager::infoPlugin(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, pluginInfoLine(data->d, it->second)));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("plugin exception: ") + e.what()};
     }
@@ -415,19 +414,18 @@ YomkResponse YomkPluginManager::infoAll(YomkPkgPtr pkg)
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             size_t totalInstances = 0;
-            for (const auto &kv : m_instances)
+            for (const auto& kv : m_instances)
             {
                 totalInstances += kv.second.size();
             }
-            dump = "plugins:" + std::to_string(m_plugins.size()) +
-                   " instances:" + std::to_string(totalInstances);
-            for (const auto &kv : m_plugins)
+            dump = "plugins:" + std::to_string(m_plugins.size()) + " instances:" + std::to_string(totalInstances);
+            for (const auto& kv : m_plugins)
             {
                 dump += "\n" + pluginInfoLine(kv.first, kv.second);
                 auto it = m_instances.find(kv.first);
                 if (it != m_instances.end())
                 {
-                    for (const auto &instKv : it->second)
+                    for (const auto& instKv : it->second)
                     {
                         dump += "\n  " + instanceInfoLine(instKv.first, instKv.second);
                     }
@@ -436,7 +434,7 @@ YomkResponse YomkPluginManager::infoAll(YomkPkgPtr pkg)
         }
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, dump));
     }
-    catch (const std::exception &e)
+    catch (const std::exception& e)
     {
         return {YomkResponse::eNo, std::string("all exception: ") + e.what()};
     }
@@ -446,7 +444,7 @@ YomkResponse YomkPluginManager::infoAll(YomkPkgPtr pkg)
     }
 }
 
-std::string YomkPluginManager::pluginInfoLine(const std::string &libId, const PluginRecord &rec) const
+std::string YomkPluginManager::pluginInfoLine(const std::string& libId, const PluginRecord& rec) const
 {
     size_t instanceCount = 0;
     auto it = m_instances.find(libId);
@@ -454,16 +452,14 @@ std::string YomkPluginManager::pluginInfoLine(const std::string &libId, const Pl
     {
         instanceCount = it->second.size();
     }
-    return libId + " [" + rec.type + "] v:" + rec.version +
-           " author:" + rec.author + " path:" + rec.libPath +
+    return libId + " [" + rec.type + "] v:" + rec.version + " author:" + rec.author + " path:" + rec.libPath +
            " instances:" + std::to_string(instanceCount);
 }
 
-std::string YomkPluginManager::instanceInfoLine(const std::string &instanceName,
-                                                const std::shared_ptr<YomkPluginInterface> &inst) const
+std::string YomkPluginManager::instanceInfoLine(const std::string& instanceName,
+                                                const std::shared_ptr<YomkPluginInterface>& inst) const
 {
     std::string type = inst->instanceType() ? inst->instanceType() : "";
     std::string id = inst->instanceId() ? inst->instanceId() : "";
-    return instanceName + " [" + type + "] id:" + id +
-           " userData:" + (inst->userData ? "on" : "off");
+    return instanceName + " [" + type + "] id:" + id + " userData:" + (inst->userData ? "on" : "off");
 }

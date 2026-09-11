@@ -10,7 +10,7 @@ using namespace yomk;
 static int g_pass = 0;
 static int g_fail = 0;
 
-static void check(bool ok, const std::string &desc)
+static void check(bool ok, const std::string& desc)
 {
     if (ok)
     {
@@ -24,10 +24,16 @@ static void check(bool ok, const std::string &desc)
     }
 }
 
-static bool isOk(const YomkResponse &r) { return r.m_status == YomkResponse::eOk; }
-static bool isNo(const YomkResponse &r) { return r.m_status == YomkResponse::eNo; }
+static bool isOk(const YomkResponse& r)
+{
+    return r.m_status == YomkResponse::eOk;
+}
+static bool isNo(const YomkResponse& r)
+{
+    return r.m_status == YomkResponse::eNo;
+}
 
-static std::string respString(const YomkResponse &r)
+static std::string respString(const YomkResponse& r)
 {
     if (r.m_data && r.m_data->name() == "String")
     {
@@ -65,7 +71,7 @@ static int instanceCount()
 /* 插件路径查找顺序：环境变量 YOMK_TEST_PLUGIN → 构建目录产物 */
 static std::string findPluginPath()
 {
-    const char *env = std::getenv("YOMK_TEST_PLUGIN");
+    const char* env = std::getenv("YOMK_TEST_PLUGIN");
     if (env && *env)
     {
         return env;
@@ -73,7 +79,7 @@ static std::string findPluginPath()
     return TEST_PLUGIN_BUILD_PATH;
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     YOMK_INIT();
     YOMK_NEW_SERVICE(YomkPluginLoader);
@@ -96,11 +102,11 @@ int main(int argc, char *argv[])
     /* ---------- 用例7：版本（YOMKPLUGIN_VERSION 走 Builder /version
      * 请求并自动打印） ---------- */
     {
-      YomkResponse resp =
-          YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
-      check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
-            "Builder /version returns version string");
-      YOMKPLUGIN_VERSION(); /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+        YomkResponse resp = YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
+        check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
+              "Builder /version returns version string");
+        /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+        YOMKPLUGIN_VERSION();
     }
 
     /* ---------- 用例5a：load 不存在路径返回 eNo ---------- */
@@ -121,10 +127,10 @@ int main(int argc, char *argv[])
         if (isOk(resp))
         {
             YomkUnPackPkg(resp.m_data, PluginMetaArray, arr);
-            for (const auto &m : arr->d)
+            for (const auto& m : arr->d)
             {
-                if (m.name == libId && m.type == "demo" && m.version == "0.0.1" &&
-                    m.author == "Yomk" && m.libPath == path.path && m.abi_version == YOMKPLUGIN_ABI_VERSION)
+                if (m.name == libId && m.type == "demo" && m.version == "0.0.1" && m.author == "Yomk" &&
+                    m.libPath == path.path && m.abi_version == YOMKPLUGIN_ABI_VERSION)
                 {
                     found = true;
                 }
@@ -133,8 +139,7 @@ int main(int argc, char *argv[])
         check(found, "/list contains TestPlugin with correct meta fields");
 
         /* ---------- 用例5b：重复 load 同名返回 eNo ---------- */
-        check(isNo(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))),
-              "duplicate load returns eNo");
+        check(isNo(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))), "duplicate load returns eNo");
     }
 
     /* ---------- 用例2：create_instance x2 + list_instances + userData ---------- */
@@ -190,8 +195,7 @@ int main(int argc, char *argv[])
 
     /* ---------- 用例4b：重载 + force_unload ---------- */
     {
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))),
-              "reload after try_unload");
+        check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))), "reload after try_unload");
         CreateReq req;
         req.libId = libId;
         req.instanceName = "inst-reload";
@@ -200,8 +204,7 @@ int main(int argc, char *argv[])
         check(isOk(YOMK_REQUEST("/YomkPluginManager/force_unload", YomkMkPtr(String, libId))),
               "force_unload deletes all instances and unloads");
         check(pluginCount() == 0 && instanceCount() == 0, "tables empty after force_unload");
-        check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))),
-              "reload after force_unload");
+        check(isOk(YOMK_REQUEST("/YomkPluginManager/load", YomkMkPtr(PluginPath, path))), "reload after force_unload");
     }
 
     /* ---------- 用例5c：空实例名 / 重名实例均返回 eNo ---------- */
@@ -233,7 +236,7 @@ int main(int argc, char *argv[])
         if (isOk(resp))
         {
             YomkUnPackPkg(resp.m_data, StringArray, arr);
-            for (const auto &line : arr->d)
+            for (const auto& line : arr->d)
             {
                 if (line == "/load [PluginPath]")
                     hasLoadType = true;
@@ -244,8 +247,7 @@ int main(int argc, char *argv[])
         check(hasLoadType && hasUnloadType, "YOMK_SERVER_INFO_FUNCTIONS shows type marks");
 
         /* 空态内省：计数归零 */
-        check(respString(YOMKPLUGIN_LOADER_INFO_ALL()).find("libs:0") == 0,
-              "Loader /all reports libs:0 after unload");
+        check(respString(YOMKPLUGIN_LOADER_INFO_ALL()).find("libs:0") == 0, "Loader /all reports libs:0 after unload");
         check(respString(YOMKPLUGIN_MANAGER_INFO_ALL()).find("plugins:0 instances:0") == 0,
               "Manager /all reports plugins:0 instances:0 after unload");
 

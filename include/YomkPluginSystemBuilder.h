@@ -1,9 +1,9 @@
 #pragma once
-#include "YomkPluginMsgs.h"
-
 #include <mutex>
 #include <string>
 #include <vector>
+
+#include "YomkPluginMsgs.h"
 
 using namespace yomk;
 
@@ -16,39 +16,46 @@ using namespace yomk;
 class YomkPluginSystemBuilder : public YomkService
 {
 public:
-    YomkPluginSystemBuilder(YomkServer *server);
+    YomkPluginSystemBuilder(YomkServer* server);
     virtual ~YomkPluginSystemBuilder() {}
     virtual int init() override;
 
 private:
-  /* 清单条目：实例名@动态库相对路径@实例配置文件相对路径 */
-  struct ManifestEntry {
-    int lineNo = 0;
-    std::string instanceName; /* 实例名（系统唯一主键） */
-    std::string
-        libRelPath; /* 动态库相对清单所在目录的完整路径（含平台相关全名） */
-    std::string instanceFile; /* 实例配置文件相对清单所在目录的完整路径 */
-  };
+    /* 清单条目：实例名@动态库相对路径@实例配置文件相对路径 */
+    struct ManifestEntry
+    {
+        int lineNo = 0;
+        /* 实例名（系统唯一主键） */
+        std::string instanceName;
+        /* 动态库相对清单所在目录的完整路径（含平台相关全名） */
+        std::string libRelPath;
+        /* 实例配置文件相对清单所在目录的完整路径 */
+        std::string instanceFile;
+    };
 
     /* 请求接口 */
-  YomkResponse build(YomkPkgPtr pkg); /* BuildReq -> String 构建结果汇总 */
-  YomkResponse version(YomkPkgPtr pkg); /* 无 -> String 扩展版本号 */
-  /* 内省接口 */
-  YomkResponse
-  infoAll(YomkPkgPtr pkg); /* -> String 最近一次构建的清单解析结果与状态 */
+    /* BuildReq -> String 构建结果汇总 */
+    YomkResponse build(YomkPkgPtr pkg);
+    /* 无 -> String 扩展版本号 */
+    YomkResponse version(YomkPkgPtr pkg);
+    /* 内省接口 */
+    /* -> String 最近一次构建的清单解析结果与状态 */
+    YomkResponse infoAll(YomkPkgPtr pkg);
 
-  /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
-   * 按 @ 切分校验三段，路径段拒绝绝对路径 */
-  YomkResponse parseManifest(const std::string &workflowPath,
-                             std::string &workflowDir,
-                             std::vector<ManifestEntry> &entries);
+    /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
+     * 按 @ 切分校验三段，路径段拒绝绝对路径 */
+    YomkResponse parseManifest(const std::string& workflowPath, std::string& workflowDir,
+                               std::vector<ManifestEntry>& entries);
 
-  /* 记录最近一次构建状态（内省用） */
-  void recordBuild(const std::string &manifest, const std::string &result,
-                   const std::vector<std::string> &entryLines);
+    /* 记录最近一次构建状态（内省用） */
+    void recordBuild(const std::string& manifest, const std::string& result,
+                     const std::vector<std::string>& entryLines);
 
-  std::mutex m_mutex;
-  std::string m_lastManifest; /* 最近一次构建的清单路径 */
-  std::string m_lastResult; /* 最近一次构建结果（成功汇总 / 失败原因） */
-  std::vector<std::string> m_lastEntries; /* 成功条目的解析明细 */
+    std::mutex m_mutex;
+    /* 最近一次构建的清单路径 */
+    std::string m_lastManifest;
+    /* 最近一次构建结果（成功汇总 / 失败原因） */
+    std::string m_lastResult;
+    /* 成功条目的解析明细 */
+    std::vector<std::string> m_lastEntries;
 };

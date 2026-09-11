@@ -12,11 +12,16 @@ extern "C"
     typedef struct
     {
         int abi_version;
-        const char *name;        /* 插件名 */
-        const char *type;        /* 插件类型 */
-        const char *version;     /* 插件版本 */
-        const char *author;      /* 作者 */
-        const char *description; /* 说明 */
+        /* 插件名 */
+        const char* name;
+        /* 插件类型 */
+        const char* type;
+        /* 插件版本 */
+        const char* version;
+        /* 作者 */
+        const char* author;
+        /* 说明 */
+        const char* description;
     } YomkPluginMeta;
 
 #ifdef __cplusplus

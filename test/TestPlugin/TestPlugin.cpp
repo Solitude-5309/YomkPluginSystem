@@ -11,39 +11,36 @@
 class MyInstance : public YomkPluginInterface
 {
 public:
-    MyInstance(const std::string &name, const std::string &instanceFile)
-        : m_name(name), m_instanceFile(instanceFile) {}
+    MyInstance(const std::string& name, const std::string& instanceFile) : m_name(name), m_instanceFile(instanceFile) {}
     virtual ~MyInstance() {}
 
-    virtual const char *instanceName() const override { return m_name.c_str(); }
-    virtual const char *instanceType() const override { return "demo"; }
+    virtual const char* instanceName() const override { return m_name.c_str(); }
+    virtual const char* instanceType() const override { return "demo"; }
     /* instanceId 不覆写，默认等于 instanceName */
 
 private:
-    std::string m_name;         /* 宿主指定的实例名 */
-    std::string m_instanceFile; /* 透传实例文件，插件自行决定是否使用 */
+    /* 宿主指定的实例名 */
+    std::string m_name;
+    /* 透传实例文件，插件自行决定是否使用 */
+    std::string m_instanceFile;
 };
 
 static const YomkPluginMeta g_meta = {
-    YOMKPLUGIN_ABI_VERSION,
-    "TestPlugin",
-    "demo",
-    "0.0.1",
-    "Yomk",
-    "Sample plugin for YomkPluginSystem testing"};
+    YOMKPLUGIN_ABI_VERSION, "TestPlugin", "demo", "0.0.1", "Yomk", "Sample plugin for YomkPluginSystem testing"};
 
-static const YomkPluginMeta *metaFn()
+static const YomkPluginMeta* metaFn()
 {
     return &g_meta;
 }
 
-static YomkPluginInterface *createFn(const char *instance_name, const char *instance_file)
+static YomkPluginInterface* createFn(const char* instance_name, const char* instance_file)
 {
     try
     {
         if (!instance_name || !*instance_name)
         {
-            return nullptr; /* 实例名由宿主指定，必填 */
+            /* 实例名由宿主指定，必填 */
+            return nullptr;
         }
         return new MyInstance(instance_name, instance_file ? instance_file : "");
     }
@@ -53,7 +50,7 @@ static YomkPluginInterface *createFn(const char *instance_name, const char *inst
     }
 }
 
-static void deleteFn(YomkPluginInterface *instance)
+static void deleteFn(YomkPluginInterface* instance)
 {
     delete instance;
 }

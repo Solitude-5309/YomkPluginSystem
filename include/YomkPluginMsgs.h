@@ -3,11 +3,12 @@
  * 消息数据类：结构体定义 + YomkMsg 注册（服务端与用户共用）。
  * 用户请求宏已统一迁移至 <YomkPluginSystem/YomkPluginAPI.h>，勿在此追加接口宏。
  */
+#include <YomkServer/YomkAPI.h>
+
 #include <memory>
 #include <string>
 #include <vector>
 
-#include <YomkServer/YomkAPI.h>
 #include "YomkPluginInterface.h"
 #include "YomkPluginMeta.h"
 
@@ -15,7 +16,8 @@
 
 struct PluginPath
 {
-    std::string path; /* so 文件路径 */
+    /* so 文件路径 */
+    std::string path;
 };
 
 struct PluginMeta
@@ -26,14 +28,17 @@ struct PluginMeta
     std::string version;
     std::string author;
     std::string description;
-    std::string libPath; /* so 文件路径（Manager 登记时补充） */
+    /* so 文件路径（Manager 登记时补充） */
+    std::string libPath;
 };
 
 struct CreateReq
 {
     std::string libId;
-    std::string instanceName; /* 调用方指定的实例名，同一插件内唯一 */
-    std::string instanceFile; /* 透传参数：允许为空，插件系统不读不解析 */
+    /* 调用方指定的实例名，同一插件内唯一 */
+    std::string instanceName;
+    /* 透传参数：允许为空，插件系统不读不解析 */
+    std::string instanceFile;
 };
 
 struct DestroyReq
@@ -44,14 +49,17 @@ struct DestroyReq
 
 struct BuildReq
 {
-    std::string workflowPath; /* manifest.yomk 清单文件路径 */
+    /* manifest.yomk 清单文件路径 */
+    std::string workflowPath;
 };
 
 struct InstanceInfo
 {
     std::string libId;
-    std::string instanceId;   /* 业务 id，默认等于 instanceName，系统不解析 */
-    std::string instanceName; /* 系统唯一主键（同一插件内唯一） */
+    /* 业务 id，默认等于 instanceName，系统不解析 */
+    std::string instanceId;
+    /* 系统唯一主键（同一插件内唯一） */
+    std::string instanceName;
     std::string instanceType;
 };
 
