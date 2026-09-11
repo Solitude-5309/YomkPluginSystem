@@ -88,7 +88,7 @@
  * 查询扩展版本：宏内部请求 /YomkPluginSystemBuilder/version 并自动解包打印
  * （成功走 YOMK_INFO_TAG、失败走 YOMK_ERROR_TAG），无返回值。版本值由 CMake
  * 编译期注入扩展 lib（EXTENSION_VERSION，单一来源 project(VERSION)），
- * 返回形如 "YomkPluginSystem v0.0.12 (WIP)" 的版本描述。
+ * 返回形如 "YomkPluginSystem v0.0.16 (WIP)" 的版本描述。
  */
 #define YOMKPLUGIN_VERSION()                                                         \
     do                                                                               \
