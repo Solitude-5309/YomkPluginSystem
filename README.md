@@ -82,9 +82,8 @@ build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/Y
 
 | 头文件 | 内容 |
 |--------|------|
-| `YomkPluginMeta.h` | 元数据 C 结构体 + `YOMKPLUGIN_ABI_VERSION`（独立常量，不随扩展版本变化） |
-| `YomkPluginInterface.h` | 插件实例抽象接口：instanceName（系统唯一主键）、instanceType、instanceId（业务字段，默认等于实例名，可覆写）、userData |
-| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMKPLUGIN_EXPORT` 一键导出宏 + 7 个门面宏（BUILD / UNLOAD / TRY_UNLOAD / INFO_ALL / INFO_PLUGINS / INFO_INSTANCES / VERSION） |
+| `YomkPluginInterface.h` | 插件侧 ABI 契约：`YomkPluginMeta` 元数据 C 结构体 + `YOMKPLUGIN_ABI_VERSION`（独立常量，不随扩展版本变化）+ 实例抽象接口：instanceName（系统唯一主键）、instanceType、instanceId（业务字段，默认等于实例名，可覆写）、userData + `YOMKPLUGIN_EXPORT` 一键导出宏 |
+| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + 7 个门面宏（BUILD / UNLOAD / TRY_UNLOAD / INFO_ALL / INFO_PLUGINS / INFO_INSTANCES / VERSION） |
 | `YomkPluginSystemBuilder.h` | 门面服务声明（唯一用户服务） |
 
 位于 `src/`、不随 install 分发的内部声明头（仅编译扩展内部可见）：
@@ -94,7 +93,7 @@ build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/Y
 | `YomkPluginLoader.h` | 机制层服务声明 + 宿主 dlsym 契约（导出符号宏与函数类型），内部用 |
 | `YomkPluginManager.h` | 数据层服务声明，内部用 |
 
-头文件单向分层：ABI 叶子（Meta/Interface）→ 消息数据类（Msgs）→ 服务声明头（Builder / 内部 Loader/Manager）→ 聚合入口（API），无 include 环。随 install 分发的公共头仅上述 5 个；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可，内部服务（Loader/Manager）声明对用户不可见，白盒测试亦仅经门面宏或 URL 直调访问。
+头文件单向分层：ABI 叶子（Interface，含元数据 C 结构）→ 消息数据类（Msgs）→ 服务声明头（Builder / 内部 Loader/Manager）→ 聚合入口（API），无 include 环。随 install 分发的公共头仅上述 4 个；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可，内部服务（Loader/Manager）声明对用户不可见，白盒测试亦仅经门面宏或 URL 直调访问。
 
 插件须以 `extern "C"` 导出三个固定符号：
 
@@ -170,8 +169,7 @@ source build_ubuntu.sh
 YomkPluginSystem/
 ├── include/                      # 对外头文件（平铺，随 install 分发）
 │   ├── YomkPluginAPI.h           # 统一 API 入口：契约 + 数据类 + 服务声明 + API 宏
-│   ├── YomkPluginMeta.h          # ABI：插件元数据结构
-│   ├── YomkPluginInterface.h     # ABI：插件实例接口
+│   ├── YomkPluginInterface.h     # ABI：插件侧契约（元数据 + 实例接口 + 导出宏）
 │   ├── YomkPluginMsgs.h          # 消息数据类 + YomkMsg 注册
 │   └── YomkPluginSystemBuilder.h # 编排层服务声明（唯一用户服务）
 ├── src/                          # 内部实现（不随 install 分发）

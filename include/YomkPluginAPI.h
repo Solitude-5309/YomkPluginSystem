@@ -6,7 +6,7 @@
  * 即可获得框架 API、ABI 契约、消息数据类、服务声明与门面请求宏。
  *
  * 头文件分层（单向依赖，无 include 环）：
- *   YomkPluginMeta.h / YomkPluginInterface.h（ABI 叶子）
+ *   YomkPluginInterface.h（ABI 叶子：插件侧契约——元数据 C 结构 + 实例接口 + 导出契约）
  *   → YomkPluginMsgs.h（消息数据类）
  *   → YomkPluginSystemBuilder.h（编排层，唯一用户可感知服务）
  *   → 本文件仅作聚合入口，无人反向依赖，内部 include 顺序不影响正确性。
@@ -16,39 +16,8 @@
 /* YOMK_INIT / YOMK_NEW_SERVICE / YOMK_REQUEST / YomkMkPtr */
 #include <YomkServer/YomkAPI.h>
 
-/* ABI 契约：插件实例接口 */
+/* ABI 契约：插件侧契约（元数据 C 结构 + 实例接口 + 导出契约） */
 #include "YomkPluginInterface.h"
-/* ABI 契约：插件元数据结构 */
-#include "YomkPluginMeta.h"
-
-/* ------------------------- 插件导出契约 ------------------------- */
-
-/*
- * 插件导出契约：以 extern "C" 导出三个固定符号（符号名宏与导出函数类型
- * 定义在内部头 src/YomkPluginLoader.h，仅宿主 dlsym 使用；插件侧无需直接使用）：
- *   const YomkPluginMeta *yomk_plugin_meta(); 返回静态常量指针
- *   YomkPluginInterface *yomk_plugin_create_instance(const char *instance_name, const char *instance_file);
- *   void yomk_plugin_delete_instance(YomkPluginInterface *instance);  内部 delete
- *
- * instance_name 为宿主指定的实例名，插件须以传入名称作为实例名。
- * instance_file 为透传参数（允许传空），插件系统不读不解析，由插件实现自行决定是否使用。
- * 所有导出函数在插件侧 try/catch，异常时 create 返回 nullptr。
- */
-
-/* 插件侧一键导出宏：三个 C 函数即完整契约 */
-#define YOMKPLUGIN_EXPORT(MetaFn, CreateFn, DeleteFn)                                                                 \
-    extern "C" const YomkPluginMeta* yomk_plugin_meta()                                                               \
-    {                                                                                                                 \
-        return MetaFn();                                                                                              \
-    }                                                                                                                 \
-    extern "C" YomkPluginInterface* yomk_plugin_create_instance(const char* instance_name, const char* instance_file) \
-    {                                                                                                                 \
-        return CreateFn(instance_name, instance_file);                                                                \
-    }                                                                                                                 \
-    extern "C" void yomk_plugin_delete_instance(YomkPluginInterface* instance)                                        \
-    {                                                                                                                 \
-        DeleteFn(instance);                                                                                           \
-    }
 
 /* ------------------------- 消息数据类与服务声明 ------------------------- */
 

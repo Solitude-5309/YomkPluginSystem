@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "YomkPluginInterface.h"
-#include "YomkPluginMeta.h"
 #include "YomkPluginMsgs.h"
 
 using namespace yomk;

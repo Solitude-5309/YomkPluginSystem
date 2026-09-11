@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "YomkPluginInterface.h"
-#include "YomkPluginMeta.h"
 
 /* ------------------------- 数据类 ------------------------- */
 
