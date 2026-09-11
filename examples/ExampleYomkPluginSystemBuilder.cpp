@@ -88,10 +88,15 @@ int main(int argc, char *argv[])
     check(fs::is_regular_file(manifest),
           "locate workflow manifest (examples/workflow/manifest.yomk)");
 
-    /* ---------- 用例1：版本 ---------- */
-    check(respString(YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr)) ==
-              "YomkPluginSystem v" EXTENSION_VERSION " (WIP)",
-          "Builder /version");
+    /* ---------- 用例1：版本（YOMKPLUGIN_VERSION 走 Builder /version
+     * 请求并自动打印） ---------- */
+    {
+      YomkResponse resp =
+          YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
+      check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
+            "Builder /version returns version string");
+      YOMKPLUGIN_VERSION(); /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+    }
 
     /* ---------- 用例2：清单路径不存在返回 eNo ---------- */
     check(isNo(buildWorkflow("/nonexistent/no_such.yomk")), "build with nonexistent manifest returns eNo");

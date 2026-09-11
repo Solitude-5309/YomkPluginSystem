@@ -15,8 +15,8 @@ int YomkPluginLoader::init()
     YomkInstallFunc("/unloadLib", YomkPluginLoader::unloadLib, String);
     YomkInstallFunc("/meta", YomkPluginLoader::meta, String);
     YomkInstallFunc("/create", YomkPluginLoader::create, CreateReq);
-    YomkInstallFunc("/delete", YomkPluginLoader::deleteInstance, PluginInstance);
-    YomkInstallFunc("/version", YomkPluginLoader::version);
+    YomkInstallFunc("/delete", YomkPluginLoader::deleteInstance,
+                    PluginInstance);
     YomkInstallFunc("/libs", YomkPluginLoader::infoLibs);
     YomkInstallFunc("/lib", YomkPluginLoader::infoLib, String);
     YomkInstallFunc("/all", YomkPluginLoader::infoAll);
@@ -222,19 +222,6 @@ YomkResponse YomkPluginLoader::deleteInstance(YomkPkgPtr pkg)
     catch (...)
     {
         return {YomkResponse::eNo, "delete exception"};
-    }
-}
-
-YomkResponse YomkPluginLoader::version(YomkPkgPtr pkg)
-{
-    try
-    {
-        std::string version = "YomkPluginSystem v" EXTENSION_VERSION " (WIP)";
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, version));
-    }
-    catch (...)
-    {
-        return {YomkResponse::eNo, "version exception"};
     }
 }
 

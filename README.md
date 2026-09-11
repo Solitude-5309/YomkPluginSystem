@@ -14,7 +14,7 @@
 
 ## 功能
 
-### /YomkPluginLoader（机制层，9 个接口）
+### /YomkPluginLoader（机制层，8 个接口）
 
 | URL | 入参 | 说明 |
 |-----|------|------|
@@ -23,12 +23,11 @@
 | `/YomkPluginLoader/meta` | String libId | 实时调用 meta 导出函数返回 `PluginMeta`，不缓存 |
 | `/YomkPluginLoader/create` | `CreateReq{libId, instanceName, instanceFile}` | 调插件工厂创建实例，shared_ptr 绑定 delete_instance 为 deleter |
 | `/YomkPluginLoader/delete` | `PluginInstance` | 释放实例（自动触发 delete_instance）并清理存活表失效项 |
-| `/YomkPluginLoader/version` | 无 | 版本查询 |
 | `/YomkPluginLoader/libs` | 无 | 内省：已加载库列表 |
 | `/YomkPluginLoader/lib` | String libId | 内省：单库元信息行 `libId abi:N alive:M` |
 | `/YomkPluginLoader/all` | 无 | 内省：全量 dump |
 
-### /YomkPluginManager（数据层，11 个接口）
+### /YomkPluginManager（数据层，10 个接口）
 
 | URL | 入参 | 说明 |
 |-----|------|------|
@@ -39,7 +38,6 @@
 | `/YomkPluginManager/destroy_instance` | `DestroyReq{libId, instanceName}` | 销毁指定实例 |
 | `/YomkPluginManager/list` | 无 / String libId | 插件表 `PluginMetaArray` |
 | `/YomkPluginManager/list_instances` | 无 / String libId | 实例表 `InstanceInfoArray`（id/name/type/libId） |
-| `/YomkPluginManager/version` | 无 | 版本查询 |
 | `/YomkPluginManager/plugins` | 无 | 内省：插件列表 |
 | `/YomkPluginManager/plugin` | String libId | 内省：单插件元信息行 |
 | `/YomkPluginManager/all` | 无 | 内省：全量 dump（含实例明细） |
@@ -58,7 +56,7 @@ YOMKPLUGIN_MANAGER_INFO_PLUGINS() / INFO_PLUGIN(libId) / INFO_ALL()
 | URL | 入参 | 说明 |
 |-----|------|------|
 | `/YomkPluginSystemBuilder/build` | `BuildReq{workflowPath}` | 解析清单并组装插件系统，返回 `String` 汇总 `plugins:N instances:M` |
-| `/YomkPluginSystemBuilder/version` | 无 | 版本查询 |
+| `/YomkPluginSystemBuilder/version` | 无 | 返回 `String` 扩展版本描述（值由 CMake 编译期注入，来源 `project(VERSION)`） |
 | `/YomkPluginSystemBuilder/all` | 无 | 内省：最近一次构建的清单解析结果与状态 |
 
 清单文件（如 `examples/workflow/manifest.yomk`）首行必须为格式标识 `#! yomk_plugin_system`（`.yomk` 后缀文件因用处不同格式各异，以首行标识区分；缺失、不在首行或不匹配则解析失败并报错），其后每行一个条目，格式为 `实例名@动态库相对路径@实例配置文件相对路径`（`@` 分隔三段，后两段均为相对清单所在目录的完整路径）：
@@ -87,7 +85,7 @@ build 流程：解析清单 → 校验实例配置文件/动态库存在 → `/Y
 |--------|------|
 | `YomkPluginMeta.h` | 元数据 C 结构体 + `YOMKPLUGIN_ABI_VERSION`（独立常量，不随扩展版本变化） |
 | `YomkPluginInterface.h` | 插件实例抽象接口：instanceName（系统唯一主键）、instanceType、instanceId（业务字段，默认等于实例名，可覆写）、userData |
-| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMKPLUGIN_EXPORT` 一键导出宏 + 全量 API 宏 |
+| `YomkPluginAPI.h` | 统一 API 入口：聚合全部对外头文件 + `YOMKPLUGIN_EXPORT` 一键导出宏 + 全量 API 宏 + `YOMKPLUGIN_VERSION()` 版本宏（请求 `/YomkPluginSystemBuilder/version` 并自动打印，版本值来自 CMake `project(VERSION)`） |
 | `YomkPluginLoader.h` | 机制层服务声明 + 宿主 dlsym 契约（导出符号宏与函数类型） |
 
 头文件单向分层：ABI 叶子（Meta/Interface）→ 消息数据类（Msgs）→ 服务声明头（Loader/Manager/Builder）→ 聚合入口（API），无 include 环。以上头文件均随 install 分发；插件开发者与宿主用户统一 `#include <YomkPluginSystem/YomkPluginAPI.h>` 即可。
@@ -189,7 +187,7 @@ YomkPluginSystem/
 
 ## 使用示例
 
-将以下完整程序拷贝为 main.cpp，安装扩展后可直接编译运行（一键注册三服务 → 版本查询）：
+将以下完整程序拷贝为 main.cpp，安装扩展后可直接编译运行（一键注册三服务 → 版本号直取）：
 
 ```cpp
 #include <YomkPluginSystem/YomkPluginAPI.h>
@@ -204,13 +202,8 @@ int main(int argc, char *argv[])
     // 三个插件系统服务一键注册（也可用 YOMK_NEW_SERVICE 逐个注册）
     YOMKPLUGIN_NEW_SERVICES();
 
-    // 版本查询请求（API 宏，等价于 YOMK_REQUEST("/YomkPluginManager/version", nullptr)）
-    YomkResponse resp = YOMKPLUGIN_MANAGER_VERSION();
-    if (resp.m_status == YomkResponse::eOk)
-    {
-        YomkUnPackPkg(resp.m_data, String, version);
-        std::cout << "version: " << version->d << std::endl; // 输出: YomkPluginSystem v0.0.1 (WIP)
-    }
+    // 查询扩展版本（请求 /YomkPluginSystemBuilder/version，成功走 YOMK_INFO_TAG 打印、失败走 YOMK_ERROR_TAG，无返回值）
+    YOMKPLUGIN_VERSION(); // 输出: YomkPluginSystem v0.0.12 (WIP)
 
     return 0;
 }

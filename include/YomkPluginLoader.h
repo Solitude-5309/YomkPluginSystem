@@ -61,7 +61,6 @@ private:
     YomkResponse meta(YomkPkgPtr pkg);           /* String libId -> PluginMeta */
     YomkResponse create(YomkPkgPtr pkg);         /* CreateReq -> PluginInstance */
     YomkResponse deleteInstance(YomkPkgPtr pkg); /* PluginInstance -> ok */
-    YomkResponse version(YomkPkgPtr pkg);        /* -> String */
     /* 内省接口 */
     YomkResponse infoLibs(YomkPkgPtr pkg); /* -> StringArray */
     YomkResponse infoLib(YomkPkgPtr pkg);  /* String libId -> String 元信息行 */

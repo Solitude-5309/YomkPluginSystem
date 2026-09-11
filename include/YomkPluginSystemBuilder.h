@@ -31,22 +31,24 @@ private:
   };
 
     /* 请求接口 */
-    YomkResponse build(YomkPkgPtr pkg);   /* BuildReq -> String 构建结果汇总 */
-    YomkResponse version(YomkPkgPtr pkg); /* -> String */
-    /* 内省接口 */
-    YomkResponse infoAll(YomkPkgPtr pkg); /* -> String 最近一次构建的清单解析结果与状态 */
+  YomkResponse build(YomkPkgPtr pkg); /* BuildReq -> String 构建结果汇总 */
+  YomkResponse version(YomkPkgPtr pkg); /* 无 -> String 扩展版本号 */
+  /* 内省接口 */
+  YomkResponse
+  infoAll(YomkPkgPtr pkg); /* -> String 最近一次构建的清单解析结果与状态 */
 
-    /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
-     * 按 @ 切分校验三段，路径段拒绝绝对路径 */
-    YomkResponse parseManifest(const std::string &workflowPath, std::string &workflowDir,
-                               std::vector<ManifestEntry> &entries);
+  /* 清单解析：首行须为格式标识 #! yomk_plugin_system；# 注释忽略（整行/行内），
+   * 按 @ 切分校验三段，路径段拒绝绝对路径 */
+  YomkResponse parseManifest(const std::string &workflowPath,
+                             std::string &workflowDir,
+                             std::vector<ManifestEntry> &entries);
 
-    /* 记录最近一次构建状态（内省用） */
-    void recordBuild(const std::string &manifest, const std::string &result,
-                     const std::vector<std::string> &entryLines);
+  /* 记录最近一次构建状态（内省用） */
+  void recordBuild(const std::string &manifest, const std::string &result,
+                   const std::vector<std::string> &entryLines);
 
-    std::mutex m_mutex;
-    std::string m_lastManifest;             /* 最近一次构建的清单路径 */
-    std::string m_lastResult;               /* 最近一次构建结果（成功汇总 / 失败原因） */
-    std::vector<std::string> m_lastEntries; /* 成功条目的解析明细 */
+  std::mutex m_mutex;
+  std::string m_lastManifest; /* 最近一次构建的清单路径 */
+  std::string m_lastResult; /* 最近一次构建结果（成功汇总 / 失败原因） */
+  std::vector<std::string> m_lastEntries; /* 成功条目的解析明细 */
 };

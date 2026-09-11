@@ -14,8 +14,8 @@ int YomkPluginManager::init()
     YomkInstallFunc("/create_instance", YomkPluginManager::createInstance, CreateReq);
     YomkInstallFunc("/destroy_instance", YomkPluginManager::destroyInstance, DestroyReq);
     YomkInstallFunc("/list", YomkPluginManager::list, String);
-    YomkInstallFunc("/list_instances", YomkPluginManager::listInstances, String);
-    YomkInstallFunc("/version", YomkPluginManager::version);
+    YomkInstallFunc("/list_instances", YomkPluginManager::listInstances,
+                    String);
     YomkInstallFunc("/plugins", YomkPluginManager::infoPlugins);
     YomkInstallFunc("/plugin", YomkPluginManager::infoPlugin, String);
     YomkInstallFunc("/all", YomkPluginManager::infoAll);
@@ -357,19 +357,6 @@ YomkResponse YomkPluginManager::listInstances(YomkPkgPtr pkg)
     catch (...)
     {
         return {YomkResponse::eNo, "list_instances exception"};
-    }
-}
-
-YomkResponse YomkPluginManager::version(YomkPkgPtr pkg)
-{
-    try
-    {
-        std::string version = "YomkPluginSystem v" EXTENSION_VERSION " (WIP)";
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, version));
-    }
-    catch (...)
-    {
-        return {YomkResponse::eNo, "version exception"};
     }
 }
 

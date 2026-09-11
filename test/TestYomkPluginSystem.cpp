@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     YOMK_INIT();
     YOMK_NEW_SERVICE(YomkPluginLoader);
     YOMK_NEW_SERVICE(YomkPluginManager);
+    YOMK_NEW_SERVICE(YomkPluginSystemBuilder);
 
     const std::string libId = "TestPlugin";
     PluginPath path;
@@ -92,13 +93,15 @@ int main(int argc, char *argv[])
     }
     std::cout << "-- plugin path: " << path.path << std::endl;
 
-    /* ---------- 用例7：版本 ---------- */
-    check(respString(YOMK_REQUEST("/YomkPluginLoader/version", nullptr)) ==
-              "YomkPluginSystem v" EXTENSION_VERSION " (WIP)",
-          "Loader /version");
-    check(respString(YOMK_REQUEST("/YomkPluginManager/version", nullptr)) ==
-              "YomkPluginSystem v" EXTENSION_VERSION " (WIP)",
-          "Manager /version");
+    /* ---------- 用例7：版本（YOMKPLUGIN_VERSION 走 Builder /version
+     * 请求并自动打印） ---------- */
+    {
+      YomkResponse resp =
+          YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);
+      check(isOk(resp) && respString(resp).find("YomkPluginSystem v") == 0,
+            "Builder /version returns version string");
+      YOMKPLUGIN_VERSION(); /* 宏路径：请求 + 解包 + 打印，不应崩溃 */
+    }
 
     /* ---------- 用例5a：load 不存在路径返回 eNo ---------- */
     {

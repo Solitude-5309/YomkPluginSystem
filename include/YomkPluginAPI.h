@@ -84,11 +84,8 @@
       YomkMkPtr(CreateReq, CreateReq{libId, instanceName, instanceFile}))
 /* 销毁实例（参数为 create 返回包 unpack 后的 inst->d:
  * shared_ptr<YomkPluginInterface>），返回 String(ok/msg) */
-#define YOMKPLUGIN_LOADER_DELETE(instance)                                    \
+#define YOMKPLUGIN_LOADER_DELETE(instance)                                     \
   YOMK_REQUEST("/YomkPluginLoader/delete", YomkMkPtr(PluginInstance, instance))
-/* 查询 Loader 服务版本，返回 String */
-#define YOMKPLUGIN_LOADER_VERSION()                                           \
-  YOMK_REQUEST("/YomkPluginLoader/version", nullptr)
 
 /* Loader：机制层内省（已加载库列表 / 单库元信息 / 全量 dump） */
 #define YOMKPLUGIN_LOADER_INFO_LIBS()                                         \
@@ -127,11 +124,8 @@
 /* 查询实例明细（libId 为空查全部），返回 InstanceInfoArray */
 #define YOMKPLUGIN_MANAGER_LIST_INSTANCES()                                   \
   YOMK_REQUEST("/YomkPluginManager/list_instances", nullptr)
-#define YOMKPLUGIN_MANAGER_LIST_INSTANCES_LIB(libId)                          \
+#define YOMKPLUGIN_MANAGER_LIST_INSTANCES_LIB(libId)                           \
   YOMK_REQUEST("/YomkPluginManager/list_instances", YomkMkPtr(String, libId))
-/* 查询 Manager 服务版本，返回 String */
-#define YOMKPLUGIN_MANAGER_VERSION()                                          \
-  YOMK_REQUEST("/YomkPluginManager/version", nullptr)
 
 /* Manager：数据层内省（插件列表 / 单插件元信息 / 全量 dump 含实例明细） */
 #define YOMKPLUGIN_MANAGER_INFO_PLUGINS()                                     \
@@ -145,13 +139,31 @@
 
 /* 按清单构建插件工程（yomk 清单驱动 cmake），返回 StringArray(构建产物 so 路径)
  */
-#define YOMKPLUGIN_BUILDER_BUILD(workflowPath)                                \
+#define YOMKPLUGIN_BUILDER_BUILD(workflowPath)                                 \
   YOMK_REQUEST("/YomkPluginSystemBuilder/build",                               \
                YomkMkPtr(BuildReq, BuildReq{workflowPath}))
-/* 查询 Builder 服务版本，返回 String */
-#define YOMKPLUGIN_BUILDER_VERSION()                                          \
-  YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr)
 
 /* Builder：编排层内省（全量 dump） */
 #define YOMKPLUGIN_BUILDER_INFO_ALL()                                         \
   YOMK_REQUEST("/YomkPluginSystemBuilder/all", nullptr)
+
+/* ------------------------- 版本 ------------------------- */
+
+/*
+ * 查询扩展版本：宏内部请求 /YomkPluginSystemBuilder/version 并自动解包打印
+ * （成功走 YOMK_INFO_TAG、失败走 YOMK_ERROR_TAG），无返回值。版本值由 CMake
+ * 编译期注入扩展 lib（EXTENSION_VERSION，单一来源 project(VERSION)），
+ * 返回形如 "YomkPluginSystem v0.0.12 (WIP)" 的版本描述。
+ */
+#define YOMKPLUGIN_VERSION()                                                   \
+  do {                                                                         \
+    auto __resp = YOMK_REQUEST("/YomkPluginSystemBuilder/version", nullptr);   \
+    if (__resp.m_status == YomkResponse::eOk) {                                \
+      YomkUnPackPkg(__resp.m_data, String, __ver);                             \
+      if (__ver) {                                                             \
+        YOMK_INFO_TAG("YomkPluginSystem", __ver->d);                           \
+      }                                                                        \
+    } else {                                                                   \
+      YOMK_ERROR_TAG("YomkPluginSystem", "getVersion failed: ", __resp.m_msg); \
+    }                                                                          \
+  } while (0)

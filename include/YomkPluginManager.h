@@ -39,7 +39,6 @@ private:
     YomkResponse destroyInstance(YomkPkgPtr pkg); /* DestroyReq -> ok */
     YomkResponse list(YomkPkgPtr pkg);            /* [String libId] -> PluginMetaArray */
     YomkResponse listInstances(YomkPkgPtr pkg);   /* [String libId] -> InstanceInfoArray */
-    YomkResponse version(YomkPkgPtr pkg);         /* -> String */
     /* 内省接口 */
     YomkResponse infoPlugins(YomkPkgPtr pkg); /* -> StringArray */
     YomkResponse infoPlugin(YomkPkgPtr pkg);  /* String libId -> String 元信息行 */

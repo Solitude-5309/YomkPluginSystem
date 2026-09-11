@@ -22,7 +22,6 @@ add_executable(TestYomkPluginSystem TestYomkPluginSystem.cpp)
 # 插件产物路径编译期固化，测试程序优先按此路径 dlopen（构建目录直接可测）
 target_compile_definitions(TestYomkPluginSystem PRIVATE
     TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
-    EXTENSION_VERSION="${YomkPluginSystem_VERSION}"
 )
 target_link_libraries(TestYomkPluginSystem PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 

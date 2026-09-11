@@ -25,10 +25,10 @@ YomkPluginSystemBuilder::YomkPluginSystemBuilder(YomkServer *server)
 
 int YomkPluginSystemBuilder::init()
 {
-    YomkInstallFunc("/build", YomkPluginSystemBuilder::build, BuildReq);
-    YomkInstallFunc("/version", YomkPluginSystemBuilder::version);
-    YomkInstallFunc("/all", YomkPluginSystemBuilder::infoAll);
-    return 0;
+  YomkInstallFunc("/build", YomkPluginSystemBuilder::build, BuildReq);
+  YomkInstallFunc("/version", YomkPluginSystemBuilder::version);
+  YomkInstallFunc("/all", YomkPluginSystemBuilder::infoAll);
+  return 0;
 }
 
 YomkResponse YomkPluginSystemBuilder::parseManifest(const std::string &workflowPath, std::string &workflowDir,
@@ -219,16 +219,18 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
     }
 }
 
+/* 扩展版本号：值由 CMake 编译期注入（EXTENSION_VERSION，单一来源
+ * project(VERSION)）， 经 YOMKPLUGIN_VERSION 宏（YomkPluginAPI.h）对外 */
 YomkResponse YomkPluginSystemBuilder::version(YomkPkgPtr pkg)
 {
     try
     {
         std::string version = "YomkPluginSystem v" EXTENSION_VERSION " (WIP)";
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, version));
-    }
-    catch (...)
-    {
-        return {YomkResponse::eNo, "version exception"};
+    } catch (const std::exception &e) {
+      return {YomkResponse::eNo, std::string("version exception: ") + e.what()};
+    } catch (...) {
+      return {YomkResponse::eNo, "version exception"};
     }
 }
 
