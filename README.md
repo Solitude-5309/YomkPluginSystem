@@ -163,6 +163,55 @@ source build_ubuntu.sh
 
 > 交互式编译：依次询问 YomkServer 安装路径（前置路径）与扩展安装路径，默认均取 `$YOMK_PREFIX_PATH`，可修改。扩展库与 YomkServer 安装到一起（头文件由 `YomkServer::YomkServer` 的 INTERFACE include 统一提供）。示例程序默认编译并随扩展安装（到 `<安装路径>/bin`），安装后可直接运行 `ExampleYomkPluginSystemBuilder` 验证 workflow 构建示例。测试程序询问是否编译（直接回车不编译，输入 Y 才编译），仅本地构建不安装（产物在 `test/build/` 下），可直接运行 `TestYomkPluginSystem` 验证。
 
+## 测试
+
+### 1. 编译测试
+
+测试为独立 CMake 工程（`test/CMakeLists.txt`），不随扩展默认编译，需显式构建：
+
+```bash
+cmake -S test -B test/build -DCMAKE_PREFIX_PATH="${YOMK_PREFIX_PATH}" -DCMAKE_BUILD_TYPE=Release
+cmake --build test/build -j
+```
+
+> `CMAKE_PREFIX_PATH` 需能同时定位 YomkServer 与本扩展的安装路径（二者默认安装到同一前缀 `/opt/yomk`，`YOMK_PREFIX_PATH` 即指向该前缀）。
+
+构建产物输出到 `test/build/`：
+
+| 类型 | 产物 | 说明 |
+|---|---|---|
+| 测试程序 (1) | TestYomkPluginSystem | 白盒全量覆盖：load/list、create_instance/list_instances、重名/空实例名拒绝、try_unload/force_unload、卸载引用保护、内省（INFO_LIBS/INFO_PLUGINS/INFO_ALL 等） |
+| 测试插件库 | TestPlugin/libTestPlugin.so | 供测试程序 dlopen 加载的示例插件（不安装） |
+
+### 2. 一键运行全量测试
+
+```bash
+./test/run_tests.sh              # 默认使用 <仓库>/test/build 下的测试产物
+./test/run_tests.sh --bin DIR    # 指定测试可执行目录
+./test/run_tests.sh --timeout N  # 单测试超时秒数（默认 300）
+./test/run_tests.sh -h           # 显示用法
+```
+
+运行器行为：
+
+- **失败即停**：任一测试退出码非 0（含超时被杀）立即终止，终端输出该测试的 `[FAIL]` 用例摘要与完整日志路径
+- **日志落盘**：`test/test_logs/<时间戳>/` 下每个测试一份日志 + `summary.log` 汇总（`test_logs/` 已被 .gitignore 忽略）
+- **现场清理**：每个测试在独立临时目录运行（隔离 CWD，防意外写文件污染仓库）；运行前清理上次遗留的 `/tmp/yomk_logger_*`，结束后复查残留，发现则清理并判定整体失败
+- **超时保护**：每个测试由 `timeout` 包裹，防卡死
+- **插件路径健壮性**：运行器自动导出 `YOMK_TEST_PLUGIN` 指向与测试可执行同目录的 `TestPlugin/libTestPlugin.so`（测试程序优先读该环境变量），仓库迁移后仍可直接测试
+
+测试程序本身经白盒审计无写盘操作（无文件日志、无缓存、无生成文件），残留检查主要为防御性保留。
+
+### 3. 单独运行
+
+测试为独立可执行（纯 `main()` + 断言，返回 0 = 全部通过，非 0 = 存在失败用例），可直接运行：
+
+```bash
+./test/build/TestYomkPluginSystem
+```
+
+插件路径查找顺序：环境变量 `YOMK_TEST_PLUGIN` → 编译期固化的 `test/build/TestPlugin/libTestPlugin.so` 路径。
+
 ## 工程结构
 
 ```
@@ -183,7 +232,8 @@ YomkPluginSystem/
 │   └── workflow/                 # workflow 示例插件模块 + 清单
 ├── test/
 │   ├── TestPlugin/               # 示例插件（SHARED 库）
-│   └── TestYomkPluginSystem.cpp  # 测试程序
+│   ├── TestYomkPluginSystem.cpp  # 测试程序
+│   └── run_tests.sh              # 全量测试一键运行器
 ├── CMakeLists.txt
 ├── build_ubuntu.sh
 └── README.md

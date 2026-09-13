@@ -67,6 +67,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+test_logs/
 
 # other
 .trae/
