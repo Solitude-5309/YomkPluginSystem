@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.14)
-project(YomkPluginSystem VERSION 0.0.22 LANGUAGES CXX)
+
+# 编译器预选模块：g++ 优先，回退 clang++（必须在 project() 之前 include）
+include(cmake/AbiInfo.cmake)
+
+project(YomkPluginSystem VERSION 0.0.23 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# ABI 环境指纹：采集/打印编译环境信息并生成 abi_report.txt（project() 之后才可调用）
+yomk_abi_report()
 
 # compile_commands.json 导出到源码根目录，供 clangd 使用：
 # 构建目录可任意（仓库外亦可），避免用户因 build 目录位置不同而 IDE 解析失败
