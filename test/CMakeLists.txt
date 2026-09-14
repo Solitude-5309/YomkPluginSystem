@@ -21,4 +21,12 @@ add_subdirectory(TestPlugin)
 add_executable(TestYomkPluginFacade Facade/TestYomkPluginFacade.cpp)
 target_link_libraries(TestYomkPluginFacade PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
+# Test/Builder：清单解析全面测试（闭环2）
+# 插件 so 路径编译期固化，测试程序优先读 YOMK_TEST_PLUGIN 环境变量覆盖
+add_executable(TestYomkPluginManifest Builder/TestYomkPluginManifest.cpp)
+target_compile_definitions(TestYomkPluginManifest PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+)
+target_link_libraries(TestYomkPluginManifest PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装

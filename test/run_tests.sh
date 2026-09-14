@@ -53,6 +53,7 @@ trap 'echo ""; echo "被用户中断"; exit 130' INT TERM
 # 测试清单：与 test/CMakeLists.txt 目标一一对应（新增测试程序时在此追加）
 TESTS=(
     TestYomkPluginFacade
+    TestYomkPluginManifest
 )
 
 BUILD_HINT="cmake -S ${REPO_DIR}/test -B ${REPO_DIR}/test/build -DCMAKE_PREFIX_PATH=/opt/yomk;/opt/yomk && cmake --build ${REPO_DIR}/test/build -j"
