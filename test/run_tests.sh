@@ -58,6 +58,7 @@ TESTS=(
     TestYomkPluginBadPlugin
     TestYomkPluginManagerEdge
     TestYomkPluginReload
+    TestYomkPluginConcurrent
 )
 
 BUILD_HINT="cmake -S ${REPO_DIR}/test -B ${REPO_DIR}/test/build -DCMAKE_PREFIX_PATH=/opt/yomk;/opt/yomk && cmake --build ${REPO_DIR}/test/build -j"

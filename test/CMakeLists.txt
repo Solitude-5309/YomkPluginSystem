@@ -7,6 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(YomkServer REQUIRED)
 find_package(YomkPluginSystem REQUIRED)
+find_package(Threads REQUIRED)
 
 message(STATUS "YomkPluginSystem version: ${YomkPluginSystem_VERSION}")
 message(STATUS "YomkPluginSystem include dirs: ${YomkPluginSystem_INCLUDE_DIRS}")
@@ -79,5 +80,12 @@ target_compile_definitions(TestYomkPluginReload PRIVATE
     TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
 )
 target_link_libraries(TestYomkPluginReload PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
+# Test/Concurrency：并发正确性测试（闭环7）
+add_executable(TestYomkPluginConcurrent Concurrency/TestYomkPluginConcurrent.cpp)
+target_compile_definitions(TestYomkPluginConcurrent PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+)
+target_link_libraries(TestYomkPluginConcurrent PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer Threads::Threads)
 
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
