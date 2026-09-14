@@ -65,4 +65,12 @@ target_compile_definitions(TestYomkPluginBadPlugin PRIVATE
 )
 target_link_libraries(TestYomkPluginBadPlugin PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
+# Test/Builder：Manager 边界与内省细节测试（闭环5）
+add_executable(TestYomkPluginManagerEdge Builder/TestYomkPluginManagerEdge.cpp)
+target_compile_definitions(TestYomkPluginManagerEdge PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+    BAD_CREATE_NULL_PATH="$<TARGET_FILE:BadCreateNull>"
+)
+target_link_libraries(TestYomkPluginManagerEdge PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
