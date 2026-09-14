@@ -16,7 +16,8 @@ public:
 
     virtual const char* instanceName() const override { return m_name.c_str(); }
     virtual const char* instanceType() const override { return "demo"; }
-    /* instanceId 不覆写，默认等于 instanceName */
+    /* instanceId 覆写为透传的实例文件路径，使 instance_file 透传可经 list_instances 观测 */
+    virtual const char* instanceId() const override { return m_instanceFile.c_str(); }
 
 private:
     /* 宿主指定的实例名 */

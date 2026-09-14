@@ -29,4 +29,11 @@ target_compile_definitions(TestYomkPluginManifest PRIVATE
 )
 target_link_libraries(TestYomkPluginManifest PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
+# Test/Builder：构建生命周期端到端测试（闭环3）
+add_executable(TestYomkPluginBuildLifecycle Builder/TestYomkPluginBuildLifecycle.cpp)
+target_compile_definitions(TestYomkPluginBuildLifecycle PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+)
+target_link_libraries(TestYomkPluginBuildLifecycle PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
