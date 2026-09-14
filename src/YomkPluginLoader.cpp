@@ -112,8 +112,11 @@ YomkResponse YomkPluginLoader::unloadLib(YomkPkgPtr pkg)
             handle = it->second.handle;
             m_libs.erase(it);
             m_alive.erase(libId);
+            /* dlclose 必须持锁：与 create 持锁的插件工厂调用、meta/info 系列持锁的 metaFn
+             * 调用互斥，防止插件代码在 unmap 之后被执行（段错误）。dlclose 毫秒级且卸载
+             * 低频，锁内执行可接受 */
+            dlclose(handle);
         }
-        dlclose(handle);
         YOMK_INFO_TAG("YomkPluginLoader", "unloadLib: ", libId);
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
     }
@@ -167,8 +170,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
     try
     {
         YomkUnPackPkg(pkg, CreateReq, req);
-        YomkPluginCreateInstanceFunc createFn = nullptr;
-        YomkPluginDeleteInstanceFunc deleteFn = nullptr;
+        std::shared_ptr<YomkPluginInterface> inst;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
             auto it = m_libs.find(req->d.libId);
@@ -176,20 +178,18 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
             {
                 return {YomkResponse::eNo, "lib not loaded: " + req->d.libId};
             }
-            createFn = it->second.createFn;
-            deleteFn = it->second.deleteFn;
+            /* 插件工厂必须持锁调用：与 unloadLib 锁内 dlclose 互斥，否则锁外工厂调用
+             * 可能落在已 unmap 的插件代码上（段错误）。
+             * 契约：createFn 为纯函数、不得回调宿主服务，锁内调用无死锁 */
+            YomkPluginInterface* raw = it->second.createFn(req->d.instanceName.c_str(), req->d.instanceFile.c_str());
+            if (!raw)
+            {
+                return {YomkResponse::eNo, "create instance failed: " + req->d.libId};
+            }
+            /* shared_ptr 自定义 deleter 绑定该库的 delete_instance；登记 alive 后再返回 */
+            inst.reset(raw, it->second.deleteFn);
+            m_alive[req->d.libId].push_back(inst);
         }
-
-        /* 锁外调用插件工厂；shared_ptr 自定义 deleter 绑定该库的 delete_instance */
-        YomkPluginInterface* raw = createFn(req->d.instanceName.c_str(), req->d.instanceFile.c_str());
-        if (!raw)
-        {
-            return {YomkResponse::eNo, "create instance failed: " + req->d.libId};
-        }
-        std::shared_ptr<YomkPluginInterface> inst(raw, deleteFn);
-
-        std::lock_guard<std::mutex> lock(m_mutex);
-        m_alive[req->d.libId].push_back(inst);
         return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginInstance, inst));
     }
     catch (const std::exception& e)

@@ -88,4 +88,11 @@ target_compile_definitions(TestYomkPluginConcurrent PRIVATE
 )
 target_link_libraries(TestYomkPluginConcurrent PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer Threads::Threads)
 
+# Test/Concurrency：压力测试（闭环8）
+add_executable(TestYomkPluginStress Concurrency/TestYomkPluginStress.cpp)
+target_compile_definitions(TestYomkPluginStress PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+)
+target_link_libraries(TestYomkPluginStress PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer Threads::Threads)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
