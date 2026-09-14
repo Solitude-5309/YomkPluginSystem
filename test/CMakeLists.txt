@@ -73,4 +73,11 @@ target_compile_definitions(TestYomkPluginManagerEdge PRIVATE
 )
 target_link_libraries(TestYomkPluginManagerEdge PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
+# Test/Builder：重复加载/卸载时序与状态机测试（闭环6）
+add_executable(TestYomkPluginReload Builder/TestYomkPluginReload.cpp)
+target_compile_definitions(TestYomkPluginReload PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+)
+target_link_libraries(TestYomkPluginReload PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装
