@@ -36,4 +36,33 @@ target_compile_definitions(TestYomkPluginBuildLifecycle PRIVATE
 )
 target_link_libraries(TestYomkPluginBuildLifecycle PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
 
+# Test/BadPlugin：坏插件集合（仅测试用，不安装）：逐个缺陷插件覆盖宿主加载/创建失败分支
+set(BAD_PLUGINS
+    BadNoSymbol
+    BadNullMeta
+    BadNullName
+    BadEmptyName
+    BadAbi
+    BadCreateNull
+    BadCreateThrow
+)
+foreach(bad ${BAD_PLUGINS})
+    add_library(${bad} MODULE BadPlugin/${bad}.cpp)
+    target_link_libraries(${bad} PRIVATE YomkPluginSystem::YomkPluginSystem)
+endforeach()
+
+# Test/Builder：坏插件失败路径测试（闭环4）
+add_executable(TestYomkPluginBadPlugin Builder/TestYomkPluginBadPlugin.cpp)
+target_compile_definitions(TestYomkPluginBadPlugin PRIVATE
+    TEST_PLUGIN_BUILD_PATH="$<TARGET_FILE:TestPlugin>"
+    BAD_NO_SYMBOL_PATH="$<TARGET_FILE:BadNoSymbol>"
+    BAD_NULL_META_PATH="$<TARGET_FILE:BadNullMeta>"
+    BAD_NULL_NAME_PATH="$<TARGET_FILE:BadNullName>"
+    BAD_EMPTY_NAME_PATH="$<TARGET_FILE:BadEmptyName>"
+    BAD_ABI_PATH="$<TARGET_FILE:BadAbi>"
+    BAD_CREATE_NULL_PATH="$<TARGET_FILE:BadCreateNull>"
+    BAD_CREATE_THROW_PATH="$<TARGET_FILE:BadCreateThrow>"
+)
+target_link_libraries(TestYomkPluginBadPlugin PRIVATE YomkPluginSystem::YomkPluginSystem YomkServer::YomkServer)
+
 # 测试目标仅本地构建运行（test 目录专为测试用），不随扩展安装

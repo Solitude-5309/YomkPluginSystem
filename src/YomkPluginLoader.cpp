@@ -55,10 +55,12 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         }
         if (meta->abi_version != YOMKPLUGIN_ABI_VERSION)
         {
+            /* meta 指向插件 so 内静态存储，必须先取值再 dlclose，否则悬垂解引用 */
+            const int pluginAbi = meta->abi_version;
             dlclose(handle);
             return {
                 YomkResponse::eNo,
-                "abi version mismatch: plugin " + std::to_string(meta->abi_version) + ", host " +
+                "abi version mismatch: plugin " + std::to_string(pluginAbi) + ", host " +
                     std::to_string(YOMKPLUGIN_ABI_VERSION)};
         }
         libId = meta->name;
