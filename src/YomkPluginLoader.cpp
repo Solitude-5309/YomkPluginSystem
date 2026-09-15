@@ -26,7 +26,7 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, PluginPath, data);
+        YomkUnPackPkgResponse(pkg, PluginPath, data);
         void* handle = nullptr;
         YomkPluginMetaFunc metaFn = nullptr;
         YomkPluginCreateInstanceFunc createFn = nullptr;
@@ -77,7 +77,7 @@ YomkResponse YomkPluginLoader::loadLib(YomkPkgPtr pkg)
         lib.createFn = createFn;
         lib.deleteFn = deleteFn;
         m_libs[libId] = lib;
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, libId));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, libId)};
     }
     catch (const std::exception& e)
     {
@@ -93,7 +93,7 @@ YomkResponse YomkPluginLoader::unloadLib(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, String, data);
+        YomkUnPackPkgResponse(pkg, String, data);
         const std::string libId = data->d;
         void* handle = nullptr;
         {
@@ -118,7 +118,7 @@ YomkResponse YomkPluginLoader::unloadLib(YomkPkgPtr pkg)
             dlclose(handle);
         }
         YOMK_INFO_TAG("YomkPluginLoader", "unloadLib: ", libId);
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, "ok")};
     }
     catch (const std::exception& e)
     {
@@ -134,7 +134,7 @@ YomkResponse YomkPluginLoader::meta(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, String, data);
+        YomkUnPackPkgResponse(pkg, String, data);
         std::lock_guard<std::mutex> lock(m_mutex);
         auto it = m_libs.find(data->d);
         if (it == m_libs.end())
@@ -153,7 +153,7 @@ YomkResponse YomkPluginLoader::meta(YomkPkgPtr pkg)
         out.version = meta->version ? meta->version : "";
         out.author = meta->author ? meta->author : "";
         out.description = meta->description ? meta->description : "";
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginMeta, out));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(PluginMeta, out)};
     }
     catch (const std::exception& e)
     {
@@ -169,7 +169,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, CreateReq, req);
+        YomkUnPackPkgResponse(pkg, CreateReq, req);
         std::shared_ptr<YomkPluginInterface> inst;
         {
             std::lock_guard<std::mutex> lock(m_mutex);
@@ -190,7 +190,7 @@ YomkResponse YomkPluginLoader::create(YomkPkgPtr pkg)
             inst.reset(raw, it->second.deleteFn);
             m_alive[req->d.libId].push_back(inst);
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(PluginInstance, inst));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(PluginInstance, inst)};
     }
     catch (const std::exception& e)
     {
@@ -206,14 +206,14 @@ YomkResponse YomkPluginLoader::deleteInstance(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, PluginInstance, data);
+        YomkUnPackPkgResponse(pkg, PluginInstance, data);
         /* shared_ptr 拷贝随响应包销毁时 reset，自动触发 delete_instance */
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto& kv : m_alive)
         {
             purgeDead(kv.first);
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, "ok"));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, "ok")};
     }
     catch (const std::exception& e)
     {
@@ -237,7 +237,7 @@ YomkResponse YomkPluginLoader::infoLibs(YomkPkgPtr pkg)
                 ids.push_back(kv.first);
             }
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(StringArray, ids));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(StringArray, ids)};
     }
     catch (const std::exception& e)
     {
@@ -253,13 +253,13 @@ YomkResponse YomkPluginLoader::infoLib(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, String, data);
+        YomkUnPackPkgResponse(pkg, String, data);
         std::lock_guard<std::mutex> lock(m_mutex);
         if (!m_libs.count(data->d))
         {
             return {YomkResponse::eNo, "lib not loaded: " + data->d};
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, libInfoLine(data->d)));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, libInfoLine(data->d))};
     }
     catch (const std::exception& e)
     {
@@ -284,7 +284,7 @@ YomkResponse YomkPluginLoader::infoAll(YomkPkgPtr pkg)
                 dump += "\n" + libInfoLine(kv.first);
             }
         }
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, dump));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, dump)};
     }
     catch (const std::exception& e)
     {

@@ -1,0 +1,36 @@
+# clang-tidy 基线配置（闭环10 定稿，详见 .trae/documents/comprehensive-test-loop10-static-analysis.md）
+# 检查集：bugprone/performance/modernize/readability 全量启用，以下逐项禁用均有明确理由
+#
+# 禁用项理由：
+# - bugprone-easily-swappable-parameters：设计层噪音，相邻同型参数是框架消息宏约定
+# - performance-unnecessary-value-param：handler 的 YomkPkgPtr pkg 按值传参为框架
+#   YomkInstallFunc(std::bind) 签名约定，单次 shared_ptr 拷贝成本可忽略
+# - readability-implicit-bool-conversion：指针/字符真值判断为惯用法（如 !meta->name）
+# - modernize-use-trailing-return-type：与 Google 基底代码风格冲突
+# - readability-identifier-length：短名 i/j/k 等循环变量为惯用法
+# - readability-convert-member-functions-to-static：handler 必须保持非 static 成员函数，
+#   框架 YomkInstallFunc 经 std::bind(&Func, this, _1) 绑定，static 化直接编译失败
+# - modernize-avoid-bind：std::bind 位于框架 YomkInstallFunc 内部（YomkServer 头），
+#   用户侧无 bind 可改；该告警经 clangd 显示在 YomkInstallFunc 调用行，禁用以对齐口径
+#
+# 放宽项理由：
+# - cognitive-complexity 阈值 40：listInstances(38)/build(28) 为格式化拼装型函数，
+#   行为已被 208+ 断言测试覆盖，本阶段不做结构重构
+---
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -performance-unnecessary-value-param,
+  -readability-implicit-bool-conversion,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -readability-convert-member-functions-to-static,
+  -modernize-avoid-bind
+WarningsAsErrors: '*'
+CheckOptions:
+  - key: readability-function-cognitive-complexity.Threshold
+    value: '40'

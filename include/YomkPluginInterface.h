@@ -17,7 +17,7 @@ extern "C"
 #define YOMKPLUGIN_ABI_VERSION 1
 
     /* 插件元数据（常量），由插件 meta 导出函数返回静态指针 */
-    typedef struct
+    struct YomkPluginMeta
     {
         int abi_version;
         /* 插件名 */
@@ -30,7 +30,7 @@ extern "C"
         const char* author;
         /* 说明 */
         const char* description;
-    } YomkPluginMeta;
+    };
 
 #ifdef __cplusplus
 }
@@ -45,11 +45,11 @@ public:
     virtual ~YomkPluginInterface() = default;
     /* 实例名：插件系统唯一主键（登记/重名校验/查找/销毁均基于它），由宿主创建实例时指定；
      * 返回指针须在实例存活期内有效 */
-    virtual const char* instanceName() const = 0;
+    [[nodiscard]] virtual const char* instanceName() const = 0;
     /* 实例类型 */
-    virtual const char* instanceType() const = 0;
+    [[nodiscard]] virtual const char* instanceType() const = 0;
     /* 业务 id：默认与 instanceName 一致；插件可覆写做业务定制，插件系统不解析、不做唯一性校验 */
-    virtual const char* instanceId() const { return instanceName(); }
+    [[nodiscard]] virtual const char* instanceId() const { return instanceName(); }
     /* 用户数据，默认为空 */
     void* userData = nullptr;
 };

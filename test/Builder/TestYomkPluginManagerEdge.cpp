@@ -314,6 +314,14 @@ int main()
         isOk(YOMK_REQUEST("/YomkPluginManager/destroy_instance", YomkMkPtr(DestroyReq, df))),
         "M5 destroy long-file-path instance ok");
 
+    /* ---------- M5.5 错误类型消息请求（闭环10 回归）：解包校验失败返回 eNo 而非崩溃 ---------- */
+    check(isNo(YOMK_REQUEST("/YomkPluginLoader/loadLib", YomkMkPtr(String, "wrong-type-probe"))),
+          "wrong-type msg to /YomkPluginLoader/loadLib returns eNo (no crash)");
+    check(isNo(YOMK_REQUEST("/YomkPluginManager/create_instance", YomkMkPtr(String, "wrong-type-probe"))),
+          "wrong-type msg to /YomkPluginManager/create_instance returns eNo (no crash)");
+    check(isNo(YOMK_REQUEST("/YomkPluginSystemBuilder/build", YomkMkPtr(String, "wrong-type-probe"))),
+          "wrong-type msg to /YomkPluginSystemBuilder/build returns eNo (no crash)");
+
     /* ---------- M6 清理现场 ---------- */
     check(isOk(YOMKPLUGIN_UNLOAD("BadCreateNull")), "cleanup: force_unload BadCreateNull");
     check(isOk(YOMKPLUGIN_UNLOAD("TestPlugin")), "cleanup: force_unload TestPlugin");

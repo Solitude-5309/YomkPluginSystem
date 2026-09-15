@@ -25,9 +25,9 @@ using namespace yomk;
 #define YOMKPLUGIN_SYMBOL_DELETE_INSTANCE "yomk_plugin_delete_instance"
 
 /* 插件导出函数类型（dlsym 解析用） */
-typedef const YomkPluginMeta* (*YomkPluginMetaFunc)();
-typedef YomkPluginInterface* (*YomkPluginCreateInstanceFunc)(const char* instance_name, const char* instance_file);
-typedef void (*YomkPluginDeleteInstanceFunc)(YomkPluginInterface* instance);
+using YomkPluginMetaFunc = const YomkPluginMeta* (*)();
+using YomkPluginCreateInstanceFunc = YomkPluginInterface* (*)(const char* instance_name, const char* instance_file);
+using YomkPluginDeleteInstanceFunc = void (*)(YomkPluginInterface* instance);
 
 /*
  * YomkPluginLoader：插件加载机制层
@@ -39,8 +39,8 @@ class YomkPluginLoader : public YomkService
 {
 public:
     YomkPluginLoader(YomkServer* server);
-    virtual ~YomkPluginLoader() {}
-    virtual int init() override;
+    ~YomkPluginLoader() override = default;
+    int init() override;
 
 private:
     struct LoadedLib

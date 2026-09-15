@@ -16,8 +16,8 @@ class YomkPluginManager : public YomkService
 {
 public:
     YomkPluginManager(YomkServer* server);
-    virtual ~YomkPluginManager() {}
-    virtual int init() override;
+    ~YomkPluginManager() override = default;
+    int init() override;
 
 private:
     /* 插件表记录：meta 深拷贝（const char* 指向 so 内存储，dlclose 后悬垂） */

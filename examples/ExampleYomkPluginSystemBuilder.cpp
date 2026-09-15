@@ -55,6 +55,10 @@ static int pluginCount()
         return -1;
     }
     YomkUnPackPkg(resp.m_data, PluginMetaArray, arr);
+    if (!arr)
+    {
+        return -1;
+    }
     return static_cast<int>(arr->d.size());
 }
 
@@ -66,6 +70,10 @@ static int instanceCount()
         return -1;
     }
     YomkUnPackPkg(resp.m_data, InstanceInfoArray, arr);
+    if (!arr)
+    {
+        return -1;
+    }
     return static_cast<int>(arr->d.size());
 }
 
@@ -112,17 +120,20 @@ int main(int argc, char* argv[])
         if (isOk(resp))
         {
             YomkUnPackPkg(resp.m_data, InstanceInfoArray, arr);
-            for (const auto& i : arr->d)
+            if (arr)
             {
-                if (i.libId == "ConnectionService" && i.instanceName == "ConnectionService" &&
-                    i.instanceType == "workflow")
+                for (const auto& i : arr->d)
                 {
-                    foundConn = true;
-                }
-                if (i.libId == "WorkspaceService" && i.instanceName == "WorkspaceService" &&
-                    i.instanceType == "workflow")
-                {
-                    foundWs = true;
+                    if (i.libId == "ConnectionService" && i.instanceName == "ConnectionService" &&
+                        i.instanceType == "workflow")
+                    {
+                        foundConn = true;
+                    }
+                    if (i.libId == "WorkspaceService" && i.instanceName == "WorkspaceService" &&
+                        i.instanceType == "workflow")
+                    {
+                        foundWs = true;
+                    }
                 }
             }
         }

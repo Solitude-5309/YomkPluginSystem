@@ -133,14 +133,14 @@ YomkResponse YomkPluginSystemBuilder::parseManifest(
         }
         entries.push_back(entry);
     }
-    return YomkResponse(YomkResponse::eOk, "ok");
+    return {YomkResponse::eOk, "ok"};
 }
 
 YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
 {
     try
     {
-        YomkUnPackPkg(pkg, BuildReq, req);
+        YomkUnPackPkgResponse(pkg, BuildReq, req);
 
         std::vector<ManifestEntry> entries;
         std::string workflowDir;
@@ -158,6 +158,11 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
         if (resp.m_status == YomkResponse::eOk)
         {
             YomkUnPackPkg(resp.m_data, PluginMetaArray, arr);
+            if (!arr)
+            {
+                recordBuild(req->d.workflowPath, "build: invalid plugin list response", {});
+                return {YomkResponse::eNo, "build: invalid plugin list response"};
+            }
             for (const auto& m : arr->d)
             {
                 pathToLib[m.libPath] = m.name;
@@ -175,13 +180,17 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
 
             if (!fs::is_regular_file(instancePath))
             {
-                std::string msg = lineTag + ": instance file not found: " + instancePath;
+                std::string msg = lineTag;
+                msg += ": instance file not found: ";
+                msg += instancePath;
                 recordBuild(req->d.workflowPath, msg, entryLines);
                 return {YomkResponse::eNo, msg};
             }
             if (!fs::is_regular_file(soPath))
             {
-                std::string msg = lineTag + ": plugin lib not found: " + soPath;
+                std::string msg = lineTag;
+                msg += ": plugin lib not found: ";
+                msg += soPath;
                 recordBuild(req->d.workflowPath, msg, entryLines);
                 return {YomkResponse::eNo, msg};
             }
@@ -205,6 +214,12 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
                     return {YomkResponse::eNo, msg};
                 }
                 YomkUnPackPkg(resp.m_data, String, idPkg);
+                if (!idPkg)
+                {
+                    std::string msg = lineTag + ": invalid load response";
+                    recordBuild(req->d.workflowPath, msg, entryLines);
+                    return {YomkResponse::eNo, msg};
+                }
                 libId = idPkg->d;
                 pathToLib[soPath] = libId;
             }
@@ -231,7 +246,7 @@ YomkResponse YomkPluginSystemBuilder::build(YomkPkgPtr pkg)
             "plugins:" + std::to_string(loadedLibs.size()) + " instances:" + std::to_string(createdInstances);
         recordBuild(req->d.workflowPath, "ok " + summary, entryLines);
         YOMK_INFO_TAG("YomkPluginSystemBuilder", "build: ", req->d.workflowPath, " ", summary);
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, summary));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, summary)};
     }
     catch (const std::exception& e)
     {
@@ -250,7 +265,7 @@ YomkResponse YomkPluginSystemBuilder::version(YomkPkgPtr pkg)
     try
     {
         std::string version = "YomkPluginSystem v" EXTENSION_VERSION " (WIP)";
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, version));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, version)};
     }
     catch (const std::exception& e)
     {
@@ -296,7 +311,7 @@ YomkResponse YomkPluginSystemBuilder::infoAll(YomkPkgPtr pkg)
         };
         appendSegment("plugins", "/YomkPluginManager/all");
         appendSegment("libs", "/YomkPluginLoader/all");
-        return YomkResponse(YomkResponse::eOk, "ok", YomkMkPtr(String, dump));
+        return {YomkResponse::eOk, "ok", YomkMkPtr(String, dump)};
     }
     catch (const std::exception& e)
     {

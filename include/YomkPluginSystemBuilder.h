@@ -17,9 +17,9 @@ class YomkPluginSystemBuilder : public YomkService
 {
 public:
     YomkPluginSystemBuilder(YomkServer* server);
-    virtual ~YomkPluginSystemBuilder() {}
-    virtual int init() override;
-    virtual void deinit() override;
+    ~YomkPluginSystemBuilder() override = default;
+    int init() override;
+    void deinit() override;
 
 private:
     /* 清单条目：实例名@动态库相对路径@实例配置文件相对路径 */
